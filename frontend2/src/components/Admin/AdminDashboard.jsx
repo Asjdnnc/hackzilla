@@ -1,16 +1,16 @@
 import React, { useState, useEffect, useContext } from 'react';
-import {
-  Container,
-  Typography,
-  Paper,
-  Grid,
-  Button,
-  Card,
-  CardContent,
+import { 
+  Container, 
+  Typography, 
+  Paper, 
+  Grid, 
+  Button, 
+  Card, 
+  CardContent, 
   CardActions,
   CircularProgress,
-  Tabs,
-  Tab,
+  Tabs, 
+  Tab, 
   Box,
   useTheme,
   useMediaQuery,
@@ -153,16 +153,16 @@ const FoodStatCard = ({ meal, stats, loading, ...props }) => {
           border: '1px solid rgba(255,255,255,0.08)',
           boxShadow: theme.shadows[3],
           backdropFilter: 'blur(10px)',
-          height: '100%',
-          display: 'flex',
-          flexDirection: 'column',
+    height: '100%',
+    display: 'flex',
+    flexDirection: 'column',
           position: 'relative',
           overflow: 'hidden',
           transition: 'all 0.3s ease-in-out',
           '&:hover': {
             transform: 'translateY(-5px)',
             boxShadow: theme.shadows[8],
-          },
+  },
           ...props.sx
         }}
       >
@@ -307,7 +307,7 @@ const ActionCard = ({ title, description, icon, link, ...props }) => {
               color: 'rgba(255, 255, 255, 0.7)',
               '&:hover': {
                 background: 'none',
-              },
+  },
             }}
           >
             View Details
@@ -432,7 +432,7 @@ const AdminDashboard = () => {
 
         const res = await axios.get(`${API_URL}/api/admin/food-stats`, config);
          if (res.data && typeof res.data === 'object') {
-             setFoodStats(res.data);
+        setFoodStats(res.data);
          } else {
              console.warn('Unexpected food stats response format:', res.data);
          }
@@ -467,9 +467,9 @@ const AdminDashboard = () => {
         <Typography variant="h6" color="error">
           {error}
         </Typography>
-        <Button
-          variant="contained"
-          color="primary"
+        <Button 
+          variant="contained" 
+          color="primary" 
           style={{ marginTop: '20px' }}
           onClick={() => window.location.reload()}
         >
@@ -489,7 +489,7 @@ const AdminDashboard = () => {
         px: { xs: 2, md: 0 }
       }}
     >
-      <Container maxWidth="lg">
+    <Container maxWidth="lg">
         <Fade in={true}>
           <Box sx={{ mb: 6, textAlign: 'center' }}>
             <GradientTypography
@@ -500,7 +500,7 @@ const AdminDashboard = () => {
                 letterSpacing: 1,
               }}
             >
-              Admin Dashboard
+          Admin Dashboard
             </GradientTypography>
             <Typography
               variant="subtitle1"
@@ -511,10 +511,10 @@ const AdminDashboard = () => {
               }}
             >
               Monitor team registrations, food status, and manage the event efficiently
-            </Typography>
+        </Typography>
           </Box>
         </Fade>
-
+        
         {/* Stats Overview */}
         <Grid container spacing={3} sx={{ mb: 6 }}>
           <Grid item xs={12} sm={6} md={3}>
@@ -558,7 +558,7 @@ const AdminDashboard = () => {
             />
           </Grid>
         </Grid>
-
+        
         {/* Food Status Overview */}
         <Fade in={true}>
           <Box sx={{ mb: 6 }}>
@@ -577,8 +577,8 @@ const AdminDashboard = () => {
                   <RefreshIcon />
                 </IconButton>
               </Tooltip>
-            </Box>
-            <Grid container spacing={3}>
+          </Box>
+              <Grid container spacing={3}>
               {['lunch', 'dinner', 'snacks'].map((meal, index) => (
                 <Grid item xs={12} md={4} key={meal}>
                   <FoodStatCard
@@ -589,10 +589,10 @@ const AdminDashboard = () => {
                   />
                 </Grid>
               ))}
-            </Grid>
+              </Grid>
           </Box>
         </Fade>
-
+        
         {/* Admin Actions */}
         <Fade in={true}>
           <Box>
@@ -603,7 +603,7 @@ const AdminDashboard = () => {
               Quick Actions
             </GradientTypography>
             <Grid container spacing={3}>
-              <Grid item xs={12} md={4}>
+          <Grid item xs={12} md={4}>
                 <ActionCard
                   title="Manage Teams"
                   description="View all registered teams, approve team registrations, and manage team details."
@@ -611,8 +611,8 @@ const AdminDashboard = () => {
                   link="/admin/teams"
                   delay="100ms"
                 />
-              </Grid>
-              <Grid item xs={12} md={4}>
+          </Grid>
+          <Grid item xs={12} md={4}>
                 <ActionCard
                   title="QR Scanner"
                   description="Scan team QR codes for check-in and registration at the event."
@@ -620,8 +620,8 @@ const AdminDashboard = () => {
                   link="/admin/scanner"
                   delay="200ms"
                 />
-              </Grid>
-              <Grid item xs={12} md={4}>
+          </Grid>
+          <Grid item xs={12} md={4}>
                 <ActionCard
                   title="User Management"
                   description="Create and manage admin and volunteer accounts."
@@ -629,11 +629,11 @@ const AdminDashboard = () => {
                   link="/admin/users"
                   delay="300ms"
                 />
-              </Grid>
-            </Grid>
+          </Grid>
+        </Grid>
           </Box>
         </Fade>
-      </Container>
+    </Container>
     </Box>
   );
 };

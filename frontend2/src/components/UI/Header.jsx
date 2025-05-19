@@ -113,9 +113,9 @@ const Header = () => {
               key={link.path}
               component={NavLink}
               to={link.path}
-              sx={{
+            sx={{ 
                 my: 2,
-                color: 'white',
+              color: 'white',
                 display: 'block',
                 mx: 1,
                 '&.active': {
@@ -124,29 +124,29 @@ const Header = () => {
               }}
             >
               {link.text}
-            </Button>
+                </Button>
           ))}
           {user ? (
             <Button color="inherit" onClick={handleLogout} sx={{ my: 2, color: 'white' }}>
               Logout ({user.username} - {user.role})
-            </Button>
-          ) : (
+                  </Button>
+                ) : (
             <Button color="inherit" component={NavLink} to="/login" sx={{ my: 2, color: 'white' }}>
               Login
-            </Button>
-          )}
+                  </Button>
+                )}
         </Box>
         <Box sx={{ display: { xs: 'flex', md: 'none' } }}>
-          <IconButton
+                  <IconButton
             size="large"
             edge="start"
-            color="inherit"
+                    color="inherit"
             aria-label="menu"
             onClick={toggleDrawer(true)}
             sx={{ mr: 2 }}
-          >
+                  >
             <MenuIcon />
-          </IconButton>
+                  </IconButton>
           <Drawer
             anchor="right"
             open={drawerOpen}
@@ -155,9 +155,9 @@ const Header = () => {
           >
             {drawerList(linksToDisplay)}
           </Drawer>
-        </Box>
-      </Toolbar>
-    </AppBar>
+          </Box>
+        </Toolbar>
+      </AppBar>
   );
 };
 

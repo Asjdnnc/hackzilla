@@ -130,7 +130,7 @@ exports.getAllTeams = async (req, res) => {
     const teams = await Team.find()
       .select('-__v')
       .sort({ createdAt: -1 });
-
+    
     res.status(200).json({
       success: true,
       data: teams
@@ -161,7 +161,7 @@ exports.updateTeam = async (req, res) => {
   try {
     const { id } = req.params;
     const { name, leader, status, members, foodStatus } = req.body;
-
+    
     // Find team by teamId instead of _id
     const team = await Team.findOne({ teamId: id });
     if (!team) {
@@ -170,7 +170,7 @@ exports.updateTeam = async (req, res) => {
         message: 'Team not found'
       });
     }
-
+    
     // Validate required fields
     if (!name || !leader) {
       return res.status(400).json({
@@ -204,7 +204,7 @@ exports.updateTeam = async (req, res) => {
         message: 'Invalid status value. Must be \'valid\' or \'invalid\'.'
       });
     }
-
+    
     // Update team fields
     team.name = name;
     team.leader = leader;
@@ -220,7 +220,7 @@ exports.updateTeam = async (req, res) => {
 
     // Save the updated team
     const updatedTeam = await team.save();
-
+    
     res.status(200).json({
       success: true,
       message: 'Team updated successfully',
@@ -240,22 +240,22 @@ exports.updateTeam = async (req, res) => {
 exports.deleteTeam = async (req, res) => {
   try {
     const { id } = req.params;
-
+    
     // Validate if the provided ID is a valid MongoDB ObjectId
     if (!validateObjectId(id)) {
       return res.status(400).json({
         success: false,
         message: 'Invalid team ID format'
-      });
-    }
+    });
+  }
 
     // Use findByIdAndDelete to delete by MongoDB _id
     const team = await Team.findByIdAndDelete(id);
-
+    
     if (!team) {
       return res.status(404).json({ success: false, message: 'Team not found' });
     }
-
+    
     res.status(200).json({ success: true, message: 'Team deleted successfully' });
   } catch (error) {
     console.error('Error in deleteTeam:', error);
@@ -285,10 +285,10 @@ exports.scanQRCode = async (req, res) => {
     } catch {
       return res.status(400).json({ success: false, message: 'Invalid QR data' });
     }
-
+    
     const team = await Team.findOne({ teamId: teamData.teamId });
     if (!team) return res.status(404).json({ success: false, message: 'Team not found' });
-
+    
     // Only allow status change if current status is invalid
     if (action === 'check-in') {
       if (team.status === 'invalid') {
@@ -307,7 +307,7 @@ exports.scanQRCode = async (req, res) => {
         if (!team.foodStatus) {
           team.foodStatus = { lunch: 'invalid', dinner: 'invalid', snacks: 'invalid' };
         }
-        // Toggle food status
+      // Toggle food status
         team.foodStatus[action] = team.foodStatus[action] === 'invalid' ? 'valid' : 'invalid';
       } else {
           return res.status(400).json({ success: false, message: 'Team must have valid status to update food status' });
@@ -323,7 +323,7 @@ exports.scanQRCode = async (req, res) => {
       success: true,
       message: `${action} processed successfully`,
       data: team
-    });
+      });
   } catch (error) {
     console.error('Error scanning QR code:', error);
     res.status(500).json({ success: false, message: error.message || 'Failed to process QR scan' });
@@ -337,10 +337,10 @@ exports.updateFoodStatus = async (req, res) => {
     if (!['lunch', 'dinner', 'snacks'].includes(foodType)) {
       return res.status(400).json({ success: false, message: 'Invalid food type' });
     }
-
+    
     const team = await Team.findOne({ teamId });
     if (!team) return res.status(404).json({ success: false, message: 'Team not found' });
-
+    
     // Allow food status update only if team status is valid
     if (team.status !== 'valid') {
       return res.status(400).json({ success: false, message: 'Team must have valid status to update food status' });

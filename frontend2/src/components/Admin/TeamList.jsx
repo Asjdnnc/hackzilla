@@ -150,7 +150,7 @@ const TeamList = () => {
           headers: {
           Authorization: `Bearer ${token}`,
         },
-      };
+        };
       const res = await axios.get(`${API_URL}/api/teams`, config);
       if (Array.isArray(res.data.data)) {
         setTeams(res.data.data);
@@ -540,7 +540,7 @@ const TeamList = () => {
             sx={inputSx}
           />
         </Box>
-
+        
         {isDesktop ? (
           <TableContainer component={Paper} sx={darkTableContainerStyle}>
             <Table aria-label="teams table">
@@ -621,7 +621,7 @@ const TeamList = () => {
                     <Typography variant="body2" sx={{ color: 'rgba(255,255,255,0.7)', mb: 2 }}>
                       Team ID: {team.teamId}
                     </Typography>
-
+      
                     <Stack direction="row" spacing={1} sx={{ mb: 2 }}>
                       {getStatusChip(team.status)}
                       <Chip 

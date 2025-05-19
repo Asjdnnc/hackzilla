@@ -19,23 +19,23 @@ const NavBar = () => {
               <Typography variant="body1" color="inherit">
                 Welcome, {user.name} ({user.isAdmin ? 'Admin' : 'User'})
               </Typography>
-              <Button color="inherit" onClick={() => navigate("/")}>
-                Home
-              </Button>
+          <Button color="inherit" onClick={() => navigate("/")}>
+            Home
+          </Button>
               {user.isAdmin && (
-                <Button color="inherit" onClick={() => navigate("/admin")}>
+            <Button color="inherit" onClick={() => navigate("/admin")}>
                   Admin Dashboard
                 </Button>
               )}
               {!user.isAdmin && (
                 <Button color="inherit" onClick={() => navigate("/team-dashboard")}>
                   Team Dashboard
-                </Button>
-              )}
+            </Button>
+          )}
               {!user.isAdmin && (
-              <Button color="inherit" onClick={() => navigate("/create-team")}>
-                Create Team
-              </Button>
+          <Button color="inherit" onClick={() => navigate("/create-team")}>
+            Create Team
+          </Button>
               )}
               <Button color="inherit" onClick={logout}>
                 Logout

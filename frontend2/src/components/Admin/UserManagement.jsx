@@ -107,7 +107,7 @@ const UserManagement = () => {
       const res = await axios.get(`${API_URL}/api/users`, config);
 
       if (res.data && Array.isArray(res.data.data)) {
-        setUsers(res.data.data);
+      setUsers(res.data.data);
       } else {
         console.warn('API returned unexpected data format for users:', res.data);
         setUsers([]);
@@ -164,7 +164,7 @@ const UserManagement = () => {
       
       if (response.data) {
         showMessage('User created successfully!', 'success');
-        handleCloseDialog();
+      handleCloseDialog();
         fetchUsers(); // Refresh the user list
       }
     } catch (error) {

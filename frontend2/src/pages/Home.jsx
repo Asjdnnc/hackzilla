@@ -18,6 +18,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { AuthContext } from '../context/AuthContext';
 import CodeIcon from '@mui/icons-material/Code';
 import GitHubIcon from '@mui/icons-material/GitHub';
+import image from "../../public/image.png"
 import TwitterIcon from '@mui/icons-material/Twitter';
 import LinkedInIcon from '@mui/icons-material/LinkedIn';
 import AdminPanelSettingsIcon from '@mui/icons-material/AdminPanelSettings';
@@ -286,6 +287,20 @@ const useStyles = makeStyles({
       transform: 'scale(1)',
     },
   },
+  heroImage: {
+    width: '100%',
+    maxWidth: '500px',
+    height: 'auto',
+    animation: '$fadeInScale 0.8s ease-out 0.4s both',
+    filter: 'drop-shadow(0 10px 20px rgba(0,0,0,0.2))',
+    transition: 'transform 0.3s ease',
+    '&:hover': {
+      transform: 'translateY(-10px)',
+    },
+    '@media (max-width: 600px)': {
+      maxWidth: '300px',
+    },
+  },
 });
 
 const Home = () => {
@@ -342,22 +357,6 @@ const Home = () => {
       role: 'volunteer',
     },
   ];
-
-  const footerLinks = {
-    'Quick Links': [
-      { label: 'About Us', path: '/about' },
-      { label: 'Contact', path: '/contact' },
-      { label: 'FAQ', path: '/faq' },
-      { label: 'Privacy Policy', path: '/privacy' },
-      { label: 'Terms of Service', path: '/terms' },
-    ],
-    'Resources': [
-      { label: 'Documentation', path: '/docs' },
-      { label: 'Support', path: '/support' },
-      { label: 'Blog', path: '/blog' },
-      { label: 'Events', path: '/events' },
-    ],
-  };
 
   return (
     <div className={classes.root}>
@@ -430,11 +429,28 @@ const Home = () => {
                 </Box>
               </Grid>
               <Grid item xs={12} md={6}>
-                <Box sx={{ display: 'flex', justifyContent: 'center' }}>
+                <Box sx={{ 
+                  display: 'flex', 
+                  justifyContent: 'center',
+                  alignItems: 'center',
+                  position: 'relative',
+                  '&::before': {
+                    content: '""',
+                    position: 'absolute',
+                    width: '100%',
+                    height: '100%',
+                    background: 'radial-gradient(circle at center, rgba(255, 102, 0, 0.1) 0%, transparent 70%)',
+                    zIndex: 0,
+                  }
+                }}>
                   <img 
-                    src="/hackathon-illustration.svg" 
-                    alt="Hackathon Illustration" 
+                    src={image} 
+                    alt="Hackathon Management" 
                     className={classes.heroImage}
+                    style={{
+                      position: 'relative',
+                      zIndex: 1,
+                    }}
                   />
                 </Box>
               </Grid>
@@ -540,26 +556,7 @@ const Home = () => {
                   <LocationOnIcon />
                   <Typography>123 Hack Street, Tech City, TC 12345</Typography>
                 </Box>
-              </Grid>
-
-              {Object.entries(footerLinks).map(([title, links]) => (
-                <Grid item xs={12} sm={6} md={4} key={title}>
-                  <Typography variant="h6" className={classes.footerTitle}>
-                    {title}
-                  </Typography>
-                  {links.map((link) => (
-                    <Link
-                      key={link.path}
-                      to={link.path}
-                      className={classes.footerLink}
-                    >
-                      {link.label}
-                    </Link>
-                  ))}
-                </Grid>
-              ))}
-            <br></br>
-              <Box className={classes.socialIcons}>
+                <Box className={classes.socialIcons}>
                 <IconButton component="a" href="https://github.com" target="_blank">
                   <GitHubIcon />
                 </IconButton>
@@ -570,6 +567,7 @@ const Home = () => {
                   <LinkedInIcon />
                 </IconButton>
               </Box>
+              </Grid>
               </Grid>
           </Container>
         </Box>

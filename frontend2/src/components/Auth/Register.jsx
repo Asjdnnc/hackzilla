@@ -76,7 +76,7 @@ const Register = () => {
       justifyContent: 'center',
       alignItems: 'flex-start',
     }}>
-      <Container component="main" maxWidth="xs">
+    <Container component="main" maxWidth="xs">
         <Paper
           sx={{
             marginTop: theme.spacing(8),
@@ -97,23 +97,23 @@ const Register = () => {
             <img src="/path/to/your/logo.png" alt="Logo" style={{ maxWidth: '100px', height: 'auto' }} />
           </Box>
           <Typography component="h1" variant="h5" sx={{ mb: theme.spacing(2), fontWeight: 'bold', color: theme.palette.primary.main }}>
-            Create Account
-          </Typography>
+          Create Account
+        </Typography>
           <form
             style={{ width: '100%%' }}
             onSubmit={handleSubmit}
           >
-            <TextField
-              variant="outlined"
-              margin="normal"
-              required
-              fullWidth
-              id="name"
-              label="Full Name"
-              name="name"
-              autoComplete="name"
-              value={name}
-              onChange={handleChange}
+          <TextField
+            variant="outlined"
+            margin="normal"
+            required
+            fullWidth
+            id="name"
+            label="Full Name"
+            name="name"
+            autoComplete="name"
+            value={name}
+            onChange={handleChange}
               sx={{
                 '& label': {
                   color: 'rgba(255, 255, 255, 0.7)',
@@ -133,18 +133,18 @@ const Register = () => {
                   },
                 },
               }}
-            />
-            <TextField
-              variant="outlined"
-              margin="normal"
-              required
-              fullWidth
-              id="username"
-              label="Email Address"
-              name="username"
-              autoComplete="username"
-              value={username}
-              onChange={handleChange}
+          />
+          <TextField
+            variant="outlined"
+            margin="normal"
+            required
+            fullWidth
+            id="username"
+            label="Email Address"
+            name="username"
+            autoComplete="username"
+            value={username}
+            onChange={handleChange}
               sx={{
                 '& label': {
                   color: 'rgba(255, 255, 255, 0.7)',
@@ -164,17 +164,17 @@ const Register = () => {
                   },
                 },
               }}
-            />
-            <TextField
-              variant="outlined"
-              margin="normal"
-              required
-              fullWidth
-              id="college"
-              label="College/University"
-              name="college"
-              value={college}
-              onChange={handleChange}
+          />
+          <TextField
+            variant="outlined"
+            margin="normal"
+            required
+            fullWidth
+            id="college"
+            label="College/University"
+            name="college"
+            value={college}
+            onChange={handleChange}
               sx={{
                 '& label': {
                   color: 'rgba(255, 255, 255, 0.7)',
@@ -194,19 +194,19 @@ const Register = () => {
                   },
                 },
               }}
-            />
-            <TextField
-              variant="outlined"
-              margin="normal"
-              required
-              fullWidth
-              name="password"
-              label="Password"
+          />
+          <TextField
+            variant="outlined"
+            margin="normal"
+            required
+            fullWidth
+            name="password"
+            label="Password"
               type={showPassword ? 'text' : 'password'}
-              id="password"
-              autoComplete="new-password"
-              value={password}
-              onChange={handleChange}
+            id="password"
+            autoComplete="new-password"
+            value={password}
+            onChange={handleChange}
               sx={{
                 '& label': {
                   color: 'rgba(255, 255, 255, 0.7)',
@@ -241,18 +241,18 @@ const Register = () => {
                   </InputAdornment>
                 ),
               }}
-            />
-            <TextField
-              variant="outlined"
-              margin="normal"
-              required
-              fullWidth
-              name="confirmPassword"
-              label="Confirm Password"
+          />
+          <TextField
+            variant="outlined"
+            margin="normal"
+            required
+            fullWidth
+            name="confirmPassword"
+            label="Confirm Password"
               type={showConfirmPassword ? 'text' : 'password'}
-              id="confirmPassword"
-              value={confirmPassword}
-              onChange={handleChange}
+            id="confirmPassword"
+            value={confirmPassword}
+            onChange={handleChange}
               sx={{
                 '& label': {
                   color: 'rgba(255, 255, 255, 0.7)',
@@ -287,11 +287,11 @@ const Register = () => {
                   </InputAdornment>
                 ),
               }}
-            />
-            <Button
-              type="submit"
-              fullWidth
-              variant="contained"
+          />
+          <Button
+            type="submit"
+            fullWidth
+            variant="contained"
               sx={{
                 margin: theme.spacing(3, 0, 2),
                 backgroundColor: '#ff6600',
@@ -300,22 +300,22 @@ const Register = () => {
                   backgroundColor: '#e65c00',
                 },
               }}
-            >
-              Sign Up
-            </Button>
+          >
+            Sign Up
+          </Button>
             <Link to="/login" style={{ textDecoration: 'none' }}>
               <Typography variant="body2" align="center" sx={{ color: '#ff6600', '&:hover': { textDecoration: 'underline' } }}>
-                Already have an account? Sign in
-              </Typography>
-            </Link>
-          </form>
-        </Paper>
-        <Snackbar open={open} autoHideDuration={6000} onClose={handleClose}>
+              Already have an account? Sign in
+            </Typography>
+          </Link>
+        </form>
+      </Paper>
+      <Snackbar open={open} autoHideDuration={6000} onClose={handleClose}>
           <Alert onClose={handleClose} severity="error" sx={{ width: '100%' }}>
-            {error}
-          </Alert>
-        </Snackbar>
-      </Container>
+          {error}
+        </Alert>
+      </Snackbar>
+    </Container>
     </Box>
   );
 };

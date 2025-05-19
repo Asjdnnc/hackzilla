@@ -57,9 +57,9 @@ const teamSchema = new mongoose.Schema({
       required: true
     },
     collegeName: {
-      type: String,
-      required: true
-    },
+    type: String,
+    required: true
+  },
     isFromIIITS: {
       type: Boolean,
       default: false
