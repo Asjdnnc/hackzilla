@@ -43,6 +43,7 @@ const QRScanner = () => {
   const [action, setAction] = useState(scanActions[0]); // Default action to the first tab
   const [scannedTeam, setScannedTeam] = useState(null);
   const [selectedTabIndex, setSelectedTabIndex] = useState(0); // State for active tab
+  const [transitioning, setTransitioning] = useState(false);
 
   useEffect(() => {
     // Initialize scanner
@@ -83,14 +84,33 @@ const QRScanner = () => {
     }
   }, [selectedTabIndex, action, scannedTeam, scanning]);
 
-  const startScanner = () => {
-    if (!html5QrCode) return;
+  const getScannerSize = () => {
+    if (isMobile) {
+      // Use almost full width, and a large height (but not more than 90vh or 500px)
+      const size = Math.min(window.innerWidth, window.innerHeight * 0.8, 500);
+      return size;
+    }
+    return 400; // desktop
+  };
 
-    // Ensure previous scan result is cleared
+  const scannerSize = getScannerSize();
+
+  const startScanner = () => {
+    if (!html5QrCode || scanning || transitioning) return;
+    setTransitioning(true);
     setScannedTeam(null);
-    
-    const config = { fps: 10, qrbox: isMobile ? 180 : 250 };
-    
+    const config = {
+      fps: 30,
+      qrbox: scannerSize,
+      experimentalFeatures: {
+        useBarCodeDetectorIfSupported: true
+      },
+      videoConstraints: {
+        facingMode: 'environment',
+        width: { ideal: scannerSize },
+        height: { ideal: scannerSize }
+      }
+    };
     html5QrCode.start(
       { facingMode: "environment" },
       config,
@@ -99,43 +119,28 @@ const QRScanner = () => {
     )
     .then(() => {
       setScanning(true);
-      // Update action state based on selected tab
       setAction(scanActions[selectedTabIndex]);
     })
     .catch(err => {
-      console.error("Error starting scanner:", err);
       showMessage("Failed to start scanner. Please check camera permissions.", "error");
-    });
+    })
+    .finally(() => setTransitioning(false));
   };
 
   const stopScanner = () => {
-    if (html5QrCode && scanning) {
-      try {
-        const stopPromise = html5QrCode.stop();
-        if (stopPromise && typeof stopPromise.then === 'function') {
-          stopPromise
-            .then(() => {
-              setScanning(false);
-            })
-            .catch(err => {
-              const msg = typeof err === 'string' ? err : (err && err.message ? err.message : '');
-              if (msg.includes('Cannot stop, scanner is not running or paused')) {
-                // Ignore this error
-              } else {
-                console.error(err);
-              }
-              setScanning(false);
-            });
-        }
-      } catch (err) {
-        const msg = typeof err === 'string' ? err : (err && err.message ? err.message : '');
-        if (msg.includes('Cannot stop, scanner is not running or paused')) {
-          // Ignore this error
-        } else {
-          console.error(err);
-        }
-        setScanning(false);
+    if (!html5QrCode || !scanning || transitioning) return;
+    setTransitioning(true);
+    try {
+      const stopPromise = html5QrCode.stop();
+      if (stopPromise && typeof stopPromise.then === 'function') {
+        stopPromise
+          .then(() => setScanning(false))
+          .catch(() => setScanning(false))
+          .finally(() => setTransitioning(false));
       }
+    } catch {
+      setScanning(false);
+      setTransitioning(false);
     }
   };
 
@@ -253,7 +258,20 @@ const QRScanner = () => {
           {!scannedTeam ? (
             <>
               <Box sx={{ width: '100%', display: 'flex', justifyContent: 'center' }}>
-                <div id="reader" style={{ width: isMobile ? 220 : 320, height: isMobile ? 220 : 320, maxWidth: '100%', margin: '0 auto', border: '1px solid #ff6600', borderRadius: '8px', overflow: 'hidden', background: '#181818' }}></div> {/* Add styling to reader */}
+                <div
+                  id="reader"
+                  style={{
+                    width: scannerSize,
+                    height: scannerSize,
+                    maxWidth: '100vw',
+                    margin: 0,
+                    border: '1px solid #ff6600',
+                    borderRadius: '8px',
+                    overflow: 'hidden',
+                    background: '#181818',
+                    display: 'block',
+                  }}
+                ></div>
               </Box>
               
               <Box sx={{ display: 'flex', flexDirection: isMobile ? 'column' : 'row', justifyContent: 'center', alignItems: 'center', gap: 2, mt: 2 }}>
@@ -262,6 +280,7 @@ const QRScanner = () => {
                     variant="contained" 
                     color="primary" // Use primary color from theme
                     onClick={startScanner}
+                    disabled={transitioning}
                     sx={{
                        background: 'linear-gradient(45deg, #ff6600, #ff8533)', // Gradient background
                        color: '#fff',
@@ -279,6 +298,7 @@ const QRScanner = () => {
                     variant="outlined" // Use outlined for stop
                     color="secondary" // Use secondary color from theme
                     onClick={stopScanner}
+                    disabled={transitioning}
                      sx={{
                        color: theme.palette.secondary.main,
                        borderColor: theme.palette.secondary.main,

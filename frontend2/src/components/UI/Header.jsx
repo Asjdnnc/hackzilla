@@ -46,18 +46,17 @@ const Header = () => {
     // Add other non-admin user links here if needed
   ];
 
+  const commonLinks = [
+    // Links visible to all logged-in users
+    ...authLinks,
+  ];
+
   const adminLinks = [
-    // Admin specific links (visible only to admins)
     { path: '/admin', text: 'Admin Dashboard' },
     { path: '/admin/users', text: 'User Management' },
     { path: '/admin/teams', text: 'Manage Teams' },
     { path: '/create-team', text: 'Create Team' },
-    // Add other admin links here
-  ];
-
-  const commonLinks = [
-    // Links visible to all logged-in users
-    ...authLinks,
+    // Add other admin links here if needed
   ];
 
   // Links to display based on user authentication and role
@@ -86,22 +85,6 @@ const Header = () => {
            <ListItem button onClick={handleLogout}>
              <ListItemText primary="Logout" />
            </ListItem>
-        )}
-        {user?.isAdmin && (
-          <>
-            <ListItem button component={Link} to="/admin">
-              <ListItemText primary="Admin Dashboard" />
-            </ListItem>
-            <ListItem button component={Link} to="/admin/teams">
-              <ListItemText primary="Manage Teams" />
-            </ListItem>
-            <ListItem button component={Link} to="/admin/users">
-              <ListItemText primary="User Management" />
-            </ListItem>
-            <ListItem button component={Link} to="/create-team">
-              <ListItemText primary="Create Team" />
-            </ListItem>
-          </>
         )}
       </List>
     </Box>
