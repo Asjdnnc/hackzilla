@@ -6,6 +6,7 @@ import { AuthContext } from '../../context/AuthContext';
 import AccountCircle from '@mui/icons-material/AccountCircle';
 import { Link } from 'react-router-dom';
 import { useTheme } from '@mui/material/styles';
+import QrCodeScannerIcon from '@mui/icons-material/QrCodeScanner';
 
 const Header = () => {
   const { user, logout } = useContext(AuthContext);
@@ -76,6 +77,11 @@ const Header = () => {
             <ListItemText primary={link.text} />
           </ListItem>
         ))}
+        {user && (user.isAdmin || user.role === 'volunteer') && (
+          <ListItem button component={NavLink} to="/admin/scanner">
+            <ListItemText primary="Scan QR Code" />
+          </ListItem>
+        )}
         {user && (
            <ListItem button onClick={handleLogout}>
              <ListItemText primary="Logout" />
@@ -104,10 +110,12 @@ const Header = () => {
   return (
     <AppBar position="static" sx={{ bgcolor: '#1a1a1a' }}>
       <Toolbar>
-        <Typography variant="h6" component="div" sx={{ flexGrow: 1, color: '#ff6600' }}>
-          Hackzilla
-        </Typography>
-        <Box sx={{ display: { xs: 'none', md: 'flex' } }}>
+        <NavLink to="/" style={{ textDecoration: 'none', color: 'inherit', flexGrow: 1 }}>
+          <Typography variant="h6" component="div" sx={{ color: '#ff6600' }}>
+            Hackzilla
+          </Typography>
+        </NavLink>
+        <Box sx={{ display: { xs: 'none', md: 'flex' }, alignItems: 'center' }}>
           {linksToDisplay.map((link) => (
             <Button
               key={link.path}
@@ -124,17 +132,37 @@ const Header = () => {
               }}
             >
               {link.text}
-                </Button>
+            </Button>
           ))}
+          {user && (user.isAdmin || user.role === 'volunteer') && (
+            <Button
+              component={NavLink}
+              to="/admin/scanner"
+              sx={{
+                my: 2,
+                color: 'white',
+                display: 'flex',
+                alignItems: 'center',
+                whiteSpace: 'nowrap',
+                mx: 1,
+                 '&.active': {
+                  color: '#ff6600', // Highlight color for active link
+                },
+              }}
+              startIcon={<QrCodeScannerIcon />}
+            >
+              Scan QR Code
+            </Button>
+          )}
           {user ? (
             <Button color="inherit" onClick={handleLogout} sx={{ my: 2, color: 'white' }}>
               Logout ({user.username} - {user.role})
-                  </Button>
-                ) : (
+            </Button>
+          ) : (
             <Button color="inherit" component={NavLink} to="/login" sx={{ my: 2, color: 'white' }}>
               Login
-                  </Button>
-                )}
+            </Button>
+          )}
         </Box>
         <Box sx={{ display: { xs: 'flex', md: 'none' } }}>
                   <IconButton

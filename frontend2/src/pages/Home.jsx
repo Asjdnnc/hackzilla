@@ -414,6 +414,16 @@ const Home = () => {
                       >
                         Admin Dashboard
                       </Button>
+                    ) : user.role === 'volunteer' ? (
+                      <Button 
+                        component={Link} 
+                        to="/qr-scanner"
+                        variant="contained" 
+                        className={`${classes.ctaButton} primary`}
+                        startIcon={<QrCodeScannerIcon />}
+                      >
+                        Scan QR Code
+                      </Button>
                     ) : (
                       <Button 
                         component={Link} 
@@ -423,6 +433,24 @@ const Home = () => {
                         endIcon={<ArrowForwardIcon />}
                       >
                         Team Dashboard
+                      </Button>
+                    )}
+                    {user && (user.isAdmin || user.role === 'volunteer') && (
+                      <Button 
+                        component={Link} 
+                        to="/qr-scanner"
+                        variant="outlined"
+                        sx={{ 
+                          color: 'white', 
+                          borderColor: 'white',
+                          '&:hover': {
+                            borderColor: '#ff6600',
+                            color: '#ff6600',
+                          }
+                        }}
+                        startIcon={<QrCodeScannerIcon />}
+                      >
+                        Scan QR Code
                       </Button>
                     )}
                   </Stack>
@@ -556,17 +584,6 @@ const Home = () => {
                   <LocationOnIcon />
                   <Typography>123 Hack Street, Tech City, TC 12345</Typography>
                 </Box>
-                <Box className={classes.socialIcons}>
-                <IconButton component="a" href="https://github.com" target="_blank">
-                  <GitHubIcon />
-                </IconButton>
-                <IconButton component="a" href="https://twitter.com" target="_blank">
-                  <TwitterIcon />
-                </IconButton>
-                <IconButton component="a" href="https://linkedin.com" target="_blank">
-                  <LinkedInIcon />
-                </IconButton>
-              </Box>
               </Grid>
               </Grid>
           </Container>

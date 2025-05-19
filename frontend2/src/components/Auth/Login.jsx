@@ -5,7 +5,7 @@ import { AuthContext } from '../../context/AuthContext';
 import Alert from '@mui/material/Alert';
 import Visibility from '@mui/icons-material/Visibility';
 import VisibilityOff from '@mui/icons-material/VisibilityOff';
-
+import logo from "../../../public/logo.png";
 const Login = () => {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
@@ -73,7 +73,7 @@ const Login = () => {
           elevation={3}
         >
           <Box sx={{ mb: theme.spacing(2) }}>
-            <img src="/path/to/your/logo.png" alt="Logo" style={{ maxWidth: '100px', height: 'auto' }} />
+            <img src={logo} alt="Logo" style={{ maxWidth: '100px', height: 'auto' }} />
           </Box>
           <Typography component="h1" variant="h5" sx={{ mb: theme.spacing(2), fontWeight: 'bold', color: theme.palette.primary.main }}>
           Welcome Back
@@ -181,11 +181,6 @@ const Login = () => {
                 Don't have an account? Sign Up
               </Typography>
             </Link>
-            <Link to="/forgot-password" style={{ textDecoration: 'none' }}>
-              <Typography variant="body2" align="center" sx={{ mt: theme.spacing(1), color: '#ff6600', '&:hover': { textDecoration: 'underline' } }}>
-              Forgot Password?
-            </Typography>
-          </Link>
         </form>
       </Paper>
       <Snackbar open={open} autoHideDuration={6000} onClose={handleClose}>

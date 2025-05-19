@@ -18,6 +18,9 @@ router.post('/', createTeam);
 // Protected routes (require authentication)
 router.use(protect);
 
+// Admin and volunteer routes
+router.post('/scan', authorize('admin', 'volunteer'), scanQRCode);
+
 // Admin only routes
 router.use(authorize('admin'));
 
@@ -25,7 +28,6 @@ router.get('/:id', getTeamById);
 router.put('/:id', updateTeam);
 router.delete('/:id', deleteTeam);
 
-// Admin and volunteer routes
-router.post('/scan', authorize('admin', 'volunteer'), scanQRCode);
+
 
 module.exports = router;

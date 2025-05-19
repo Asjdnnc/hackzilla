@@ -592,13 +592,13 @@ const CreateTeam = () => {
           component="h1" 
           gutterBottom 
           sx={{ 
-            fontWeight: 700,
-            background: 'linear-gradient(45deg, #ff6600, #ff8533)',
-            WebkitBackgroundClip: 'text',
-            WebkitTextFillColor: 'transparent',
-            mb: 4,
-            textAlign: 'center',
-            letterSpacing: 1,
+          fontWeight: 700,
+          background: 'linear-gradient(45deg, #ff6600, #ff8533)',
+          WebkitBackgroundClip: 'text',
+          WebkitTextFillColor: 'transparent',
+          mb: 4,
+          textAlign: 'center',
+          letterSpacing: 1,
           }}
         >
           Team Registration
@@ -779,7 +779,7 @@ const CreateTeam = () => {
                   }} id="team-qr-code">
                     {registeredTeam?.teamId && (
                       <QRCode
-                        value={registeredTeam.teamId.toString()}
+                        value={registeredTeam.qrData}
                         size={200}
                         level="H"
                         includeMargin={true}
@@ -821,10 +821,10 @@ const CreateTeam = () => {
             <Stepper 
               activeStep={activeStep} 
               alternativeLabel 
-              sx={{ 
+                    sx={{
                 mb: 4,
                 '& .MuiStepLabel-label': { 
-                  color: '#fff',
+                        color: '#fff',
                   '&.Mui-active': { color: '#ff6600' },
                   '&.Mui-completed': { color: '#ff8533' }
                 },
@@ -847,26 +847,26 @@ const CreateTeam = () => {
               
               <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 4 }}>
                 {activeStep === steps.length - 1 ? (
-                  <Button
-                    type="submit"
-                    variant="contained"
-                    disabled={loading}
-                    startIcon={loading ? <CircularProgress size={20} /> : null}
-                    sx={{
-                      background: 'linear-gradient(45deg, #ff6600, #ff8533)',
-                      fontWeight: 700,
-                      borderRadius: 2,
-                      minWidth: 180,
+                    <Button
+                      type="submit"
+                      variant="contained"
+                      disabled={loading}
+                      startIcon={loading ? <CircularProgress size={20} /> : null}
+                      sx={{
+                        background: 'linear-gradient(45deg, #ff6600, #ff8533)',
+                        fontWeight: 700,
+                        borderRadius: 2,
+                        minWidth: 180,
                       '&:hover': { 
                         background: 'linear-gradient(45deg, #ff8533, #ff6600)',
                         transform: 'translateY(-2px)',
                         boxShadow: '0 4px 20px rgba(255, 102, 0, 0.3)',
                       },
                       transition: 'all 0.3s ease'
-                    }}
-                  >
-                    {loading ? 'Registering...' : 'Register Team'}
-                  </Button>
+                      }}
+                    >
+                      {loading ? 'Registering...' : 'Register Team'}
+                    </Button>
                 ) : (
                   <Button
                     variant="contained"
@@ -887,7 +887,7 @@ const CreateTeam = () => {
                     Next
                   </Button>
                 )}
-              </Box>
+                  </Box>
             </form>
           </Paper>
         )}

@@ -4,7 +4,7 @@ import { Search } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
 import { AuthContext } from '../../context/AuthContext';
 import axios from 'axios';
-import QRCodeComponent from '../../components/QRCode';
+import QRCode from 'qrcode.react';
 
 let API_URL = import.meta.env.VITE_API_URL;
 const statCardSx = {
@@ -291,7 +291,19 @@ const TeamDashboard = () => {
                 <Chip label={`Snacks: ${selectedTeam.foodStatus?.snacks || '-'}`} size="small" sx={{ bgcolor: selectedTeam.foodStatus?.snacks === 'valid' ? '#4caf50' : '#ff6600', color: '#fff', fontWeight: 600 }} />
               </Stack>
               <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', mt: 2 }}>
-                <QRCodeComponent team={selectedTeam} />
+                {selectedTeam.qrData && (
+                  <Box sx={{ p: 2, bgcolor: '#fff', borderRadius: 2, boxShadow: '0 4px 20px rgba(0,0,0,0.2)' }}>
+                    <QRCode
+                      value={selectedTeam.qrData}
+                      size={200}
+                      level="H"
+                      includeMargin={true}
+                      renderAs="svg"
+                      bgColor="#ffffff"
+                      fgColor="#000000"
+                    />
+                  </Box>
+                )}
               </Box>
               <Button onClick={handleCloseModal} sx={{ mt: 3, color: '#ff6600', borderColor: '#ff6600', fontWeight: 600 }} variant="outlined" fullWidth>Close</Button>
             </>
