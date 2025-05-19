@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Card, CardContent, Typography, Grid, Input, CircularProgress, Box, Container, useTheme, useMediaQuery, Stack, IconButton, Button, Chip, Modal } from '@mui/material';
 import { Search } from '@mui/icons-material';
+import RefreshIcon from '@mui/icons-material/Refresh';
 import { useNavigate } from 'react-router-dom';
 import { AuthContext } from '../../context/AuthContext';
 import axios from 'axios';
@@ -95,6 +96,38 @@ const TeamDashboard = () => {
   const navigate = useNavigate();
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
+  const [refreshing, setRefreshing] = useState(false);
+
+  const fetchTeams = async () => {
+    setLoading(true);
+    setRefreshing(true);
+    try {
+      const token = localStorage.getItem('token');
+      const config = {
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      };
+      const res = await axios.get(`${API_URL}/api/teams`, config);
+      const data = Array.isArray(res.data.data) ? res.data.data : [];
+      setTeams(data);
+
+      const validTeams = data.filter(team => team.status === 'valid').length;
+      setStats({
+        total: data.length,
+        valid: validTeams,
+        invalid: data.length - validTeams,
+        lunchValid: 0,
+        dinnerValid: 0,
+        snacksValid: 0,
+      });
+    } catch (error) {
+      console.error('Error fetching teams:', error);
+    } finally {
+      setLoading(false);
+      setRefreshing(false);
+    }
+  };
 
   useEffect(() => {
     const token = localStorage.getItem('token');
@@ -102,35 +135,6 @@ const TeamDashboard = () => {
       navigate('/login');
       return;
     }
-
-    const fetchTeams = async () => {
-      setLoading(true);
-      try {
-        const config = {
-          headers: {
-            Authorization: `Bearer ${token}`
-          }
-        };
-        const res = await axios.get(`${API_URL}/api/teams`, config);
-        const data = Array.isArray(res.data.data) ? res.data.data : [];
-        setTeams(data);
-
-        const validTeams = data.filter(team => team.status === 'valid').length;
-        setStats({
-          total: data.length,
-          valid: validTeams,
-          invalid: data.length - validTeams,
-          lunchValid: 0,
-          dinnerValid: 0,
-          snacksValid: 0,
-        });
-      } catch (error) {
-        console.error('Error fetching teams:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
     fetchTeams();
   }, [navigate]);
 
@@ -163,20 +167,25 @@ const TeamDashboard = () => {
       }}
     >
       <Container maxWidth="lg">
-        <Typography
-          variant={isMobile ? 'h4' : 'h3'}
-          sx={{
-            mb: 4,
-            fontWeight: 'bold',
-            background: 'linear-gradient(45deg, #ff6600, #ff8533)',
-            WebkitBackgroundClip: 'text',
-            WebkitTextFillColor: 'transparent',
-            textAlign: 'center',
-            letterSpacing: 1,
-          }}
-        >
-          Team Dashboard
-        </Typography>
+        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', mb: 4 }}>
+          <Typography
+            variant={isMobile ? 'h4' : 'h3'}
+            sx={{
+              fontWeight: 'bold',
+              background: 'linear-gradient(45deg, #ff6600, #ff8533)',
+              WebkitBackgroundClip: 'text',
+              WebkitTextFillColor: 'transparent',
+              textAlign: 'center',
+              letterSpacing: 1,
+              mr: 2
+            }}
+          >
+            Team Dashboard
+          </Typography>
+          <IconButton onClick={fetchTeams} color="primary" sx={{ color: '#ff6600' }} disabled={refreshing}>
+            <RefreshIcon sx={{ fontSize: isMobile ? 28 : 32, animation: refreshing ? 'spin 1s linear infinite' : 'none' }} />
+          </IconButton>
+        </Box>
 
         <Grid container spacing={4} sx={{ mb: 4 }}>
           {[

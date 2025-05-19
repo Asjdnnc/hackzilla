@@ -280,7 +280,6 @@ const TeamList = () => {
 
   const handleInputChange = (e, index) => {
     const { name, value, type, checked } = e.target;
-    console.log('Input change:', { name, value, type, checked, index }); // Debug log
 
     setEditedTeam(prev => {
       if (!prev) return prev;
@@ -345,14 +344,10 @@ const TeamList = () => {
 
           // Update the team's members array with the new array
           updatedTeam.members = updatedMembers;
-
-          console.log('Updated member:', updatedMember); // Debug log
         } else {
             console.error('Unknown member input name:', name); // Log unknown names
         }
       }
-
-      console.log('Updated team:', updatedTeam); // Debug log
       return updatedTeam;
     });
   };
@@ -439,8 +434,6 @@ const TeamList = () => {
         // Include foodStatus
         foodStatus: editedTeam.foodStatus || { lunch: 'invalid', dinner: 'invalid', snacks: 'invalid' }
       };
-
-      console.log('Updating team with data:', updateData); // Debug log
 
       // Use teamId instead of _id for the update
       const response = await axios.put(
