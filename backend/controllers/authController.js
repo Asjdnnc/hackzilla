@@ -12,7 +12,6 @@ const generateToken = (id) => {
 exports.register = async (req, res) => {
   try {
     const { username, password, role } = req.body;
-    console.log("registeration called");
     // Check if user already exists
     const userExists = await User.findOne({ username });
     if (userExists) {
