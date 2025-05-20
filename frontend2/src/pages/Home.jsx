@@ -31,6 +31,12 @@ import PhoneIcon from '@mui/icons-material/Phone';
 import LocationOnIcon from '@mui/icons-material/LocationOn';
 import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
 
+import { useEffect } from 'react';
+import axios from 'axios';
+
+const API_URL = import.meta.env.VITE_API_URL;
+
+
 const useStyles = makeStyles({
   root: {
     minHeight: '100vh',
@@ -309,6 +315,10 @@ const Home = () => {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   const navigate = useNavigate();
+
+  useEffect(() => {
+    axios.get(`${API_URL}/api/ping`).catch(() => {});
+  }, []);
 
   const navItems = [
     { label: 'Home', path: '/' },

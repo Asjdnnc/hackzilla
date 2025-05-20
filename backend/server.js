@@ -26,6 +26,11 @@ app.use('/api/teams', teamRoutes);
 app.use('/api/users', userManagementRoutes);
 app.use('/api/admin', adminRoutes);
 
+// Add ping route for health check and cold start
+app.get('/api/ping', (req, res) => {
+  res.status(200).json({ success: true, message: 'pong' });
+});
+
 // Serve static assets in production
 if (process.env.NODE_ENV === 'production') {
   app.use(express.static(path.join(__dirname, '../frontend/build')));

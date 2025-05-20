@@ -6,6 +6,8 @@ import Alert from '@mui/material/Alert';
 import Visibility from '@mui/icons-material/Visibility';
 import VisibilityOff from '@mui/icons-material/VisibilityOff';
 import logo from "../../../public/logo.png";
+import CircularProgress from '@mui/material/CircularProgress';
+
 const Login = () => {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
@@ -16,6 +18,7 @@ const Login = () => {
   const [showPassword, setShowPassword] = useState(false);
   const { login } = useContext(AuthContext);
   const navigate = useNavigate();
+  const [loading, setLoading] = useState(false);
 
   const handleClickShowPassword = () => {
     setShowPassword(!showPassword);
@@ -32,12 +35,15 @@ const Login = () => {
       setOpen(true);
       return;
     }
+    setLoading(true);
     try {
       await login(username, password);
       navigate('/team-dashboard');
     } catch (err) {
       setError(err.response?.data?.message || 'Login failed. Please check your credentials.');
       setOpen(true);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -173,8 +179,9 @@ const Login = () => {
                   backgroundColor: '#e65c00',
                 },
               }}
+            disabled={loading}
           >
-            Sign In
+            {loading ? <CircularProgress size={24} sx={{ color: '#fff' }} /> : 'Sign In'}
           </Button>
             <Link to="/register" style={{ textDecoration: 'none' }}>
               <Typography variant="body2" align="center" sx={{ color: '#ff6600', '&:hover': { textDecoration: 'underline' } }}>
