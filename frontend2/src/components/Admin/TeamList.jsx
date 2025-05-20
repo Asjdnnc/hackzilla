@@ -36,7 +36,7 @@ import { useNavigate } from 'react-router-dom';
 import { AuthContext } from '../../context/AuthContext';
 import axios from 'axios';
 import QRCode from 'qrcode.react';
-import { Search, Edit, QrCode, Delete as DeleteIcon, AddCircleOutline as AddIcon, Visibility as ViewIcon } from '@mui/icons-material';
+import { Search, Edit, QrCode, Delete as DeleteIcon, AddCircleOutline as AddIcon, Visibility as ViewIcon, Download as DownloadIcon } from '@mui/icons-material';
 
 const API_URL = import.meta.env.VITE_API_URL;
 
@@ -477,6 +477,54 @@ const TeamList = () => {
     );
   };
 
+  const handleDownloadCSV = () => {
+    try {
+      // Create CSV header
+      const headers = ['Team ID', 'Team Name', 'Leader', 'Status', 'Members Count', 'Lunch Status', 'Dinner Status', 'Snacks Status', 'Members'];
+      
+      // Create CSV rows
+      const csvRows = teams.map(team => {
+        const members = team.members.map(m => 
+          `${m.name} (${m.collegeName})${m.isFromIIITS ? ' - IIITS' : ''}`
+        ).join('; ');
+        
+        return [
+          team.teamId,
+          team.name,
+          team.leader,
+          team.status,
+          team.members.length,
+          team.foodStatus?.lunch || 'invalid',
+          team.foodStatus?.dinner || 'invalid',
+          team.foodStatus?.snacks || 'invalid',
+          members
+        ];
+      });
+
+      // Combine headers and rows
+      const csvContent = [
+        headers.join(','),
+        ...csvRows.map(row => row.map(cell => `"${cell}"`).join(','))
+      ].join('\n');
+
+      // Create and trigger download
+      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+      const link = document.createElement('a');
+      const url = URL.createObjectURL(blob);
+      link.setAttribute('href', url);
+      link.setAttribute('download', `teams_${new Date().toISOString().split('T')[0]}.csv`);
+      link.style.visibility = 'hidden';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      
+      showMessage('Teams data downloaded successfully!', 'success');
+    } catch (error) {
+      console.error('Error downloading CSV:', error);
+      showMessage('Failed to download teams data', 'error');
+    }
+  };
+
   const filteredTeams = teams.filter(team =>
     team.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
     team.leader.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -522,16 +570,33 @@ const TeamList = () => {
           Manage Teams
         </Typography>
         
-        <Box sx={searchBoxSx}>
-          <Search sx={{ color: theme.palette.primary.main, fontSize: 28 }} />
-          <Input
-            fullWidth
-            disableUnderline
-            placeholder="Search teams by name, leader, or ID..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            sx={inputSx}
-          />
+        <Box sx={{ display: 'flex', gap: 2, mb: 4, flexDirection: { xs: 'column', sm: 'row' } }}>
+          <Box sx={{ ...searchBoxSx, flex: 1 }}>
+            <Search sx={{ color: theme.palette.primary.main, fontSize: 28 }} />
+            <Input
+              fullWidth
+              disableUnderline
+              placeholder="Search teams by name, leader, or ID..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              sx={inputSx}
+            />
+          </Box>
+          <Button
+            variant="contained"
+            startIcon={<DownloadIcon />}
+            onClick={handleDownloadCSV}
+            sx={{
+              bgcolor: theme.palette.secondary.main,
+              '&:hover': {
+                bgcolor: theme.palette.secondary.dark,
+              },
+              minWidth: { xs: '100%', sm: 'auto' },
+              height: { xs: 'auto', sm: '56px' },
+            }}
+          >
+            Download CSV
+          </Button>
         </Box>
         
         {isDesktop ? (
