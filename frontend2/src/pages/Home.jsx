@@ -389,7 +389,7 @@ const Home = () => {
                   >
                     {!user ? (
                       <>
-                        <Button 
+                        {/* <Button 
                           component={Link} 
                           to="/register" 
                           variant="contained" 
@@ -397,7 +397,7 @@ const Home = () => {
                           endIcon={<ArrowForwardIcon />}
                         >
                           Get Started
-                        </Button>
+                        </Button> */}
                         <Button 
                           component={Link} 
                           to="/login" 

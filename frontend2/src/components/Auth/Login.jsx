@@ -183,11 +183,6 @@ const Login = () => {
           >
             {loading ? <CircularProgress size={24} sx={{ color: '#fff' }} /> : 'Sign In'}
           </Button>
-            <Link to="/register" style={{ textDecoration: 'none' }}>
-              <Typography variant="body2" align="center" sx={{ color: '#ff6600', '&:hover': { textDecoration: 'underline' } }}>
-                Don't have an account? Sign Up
-              </Typography>
-            </Link>
         </form>
       </Paper>
       <Snackbar open={open} autoHideDuration={6000} onClose={handleClose}>
