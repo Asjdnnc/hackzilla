@@ -151,7 +151,8 @@ const CreateTeam = () => {
         lunch: "invalid",
         dinner: "invalid",
         snacks: "invalid"
-      }
+      },
+      allotment: "invalid"
     };
 
     try {
@@ -571,6 +572,36 @@ const CreateTeam = () => {
                       ))}
                     </Stack>
                   </Box>
+                  <Box>
+                    <Typography variant="subtitle2" sx={{ color: '#ff8533', fontWeight: 700, mb: 0.5 }}>Status</Typography>
+                    <Chip 
+                      label={registeredTeam?.status || 'invalid'} 
+                      color={(registeredTeam?.status || 'invalid') === "valid" ? "success" : "warning"}
+                      size="small"
+                      sx={{ 
+                        fontWeight: 600,
+                        bgcolor: (registeredTeam?.status || 'invalid') === "valid" ? 'rgba(46, 125, 50, 0.2)' : 'rgba(237, 108, 2, 0.2)',
+                        color: (registeredTeam?.status || 'invalid') === "valid" ? '#4caf50' : '#ff6600',
+                        border: '1px solid',
+                        borderColor: (registeredTeam?.status || 'invalid') === "valid" ? 'rgba(76, 175, 80, 0.3)' : 'rgba(255, 102, 0, 0.3)'
+                      }}
+                    />
+                  </Box>
+                  <Box>
+                    <Typography variant="subtitle2" sx={{ color: '#ff8533', fontWeight: 700, mb: 0.5 }}>Allotment Status</Typography>
+                    <Chip 
+                      label={registeredTeam?.allotment || 'invalid'} 
+                      color={(registeredTeam?.allotment || 'invalid') === "valid" ? "success" : "warning"}
+                      size="small"
+                      sx={{ 
+                        fontWeight: 600,
+                        bgcolor: (registeredTeam?.allotment || 'invalid') === "valid" ? 'rgba(46, 125, 50, 0.2)' : 'rgba(237, 108, 2, 0.2)',
+                        color: (registeredTeam?.allotment || 'invalid') === "valid" ? '#4caf50' : '#ff6600',
+                        border: '1px solid',
+                        borderColor: (registeredTeam?.allotment || 'invalid') === "valid" ? 'rgba(76, 175, 80, 0.3)' : 'rgba(255, 102, 0, 0.3)'
+                      }}
+                    />
+                  </Box>
                 </Stack>
               </Paper>
             </Grid>
@@ -671,14 +702,29 @@ const CreateTeam = () => {
                       <Typography variant="subtitle2" sx={{ color: '#ff8533', fontWeight: 700, mb: 0.5 }}>Status</Typography>
                       <Chip 
                         label={registeredTeam.status} 
-                        color={registeredTeam.status === "active" ? "success" : "warning"}
+                        color={registeredTeam.status === "valid" ? "success" : "warning"}
                         size="small"
                         sx={{ 
                           fontWeight: 600,
-                          bgcolor: registeredTeam.status === "active" ? 'rgba(46, 125, 50, 0.2)' : 'rgba(237, 108, 2, 0.2)',
-                          color: registeredTeam.status === "active" ? '#4caf50' : '#ff6600',
+                          bgcolor: registeredTeam.status === "valid" ? 'rgba(46, 125, 50, 0.2)' : 'rgba(237, 108, 2, 0.2)',
+                          color: registeredTeam.status === "valid" ? '#4caf50' : '#ff6600',
                           border: '1px solid',
-                          borderColor: registeredTeam.status === "active" ? 'rgba(76, 175, 80, 0.3)' : 'rgba(255, 102, 0, 0.3)'
+                          borderColor: registeredTeam.status === "valid" ? 'rgba(76, 175, 80, 0.3)' : 'rgba(255, 102, 0, 0.3)'
+                        }}
+                      />
+                    </Box>
+                    <Box>
+                      <Typography variant="subtitle2" sx={{ color: '#ff8533', fontWeight: 700, mb: 0.5 }}>Allotment Status</Typography>
+                      <Chip 
+                        label={registeredTeam.allotment} 
+                        color={registeredTeam.allotment === "valid" ? "success" : "warning"}
+                        size="small"
+                        sx={{ 
+                          fontWeight: 600,
+                          bgcolor: registeredTeam.allotment === "valid" ? 'rgba(46, 125, 50, 0.2)' : 'rgba(237, 108, 2, 0.2)',
+                          color: registeredTeam.allotment === "valid" ? '#4caf50' : '#ff6600',
+                          border: '1px solid',
+                          borderColor: registeredTeam.allotment === "valid" ? 'rgba(76, 175, 80, 0.3)' : 'rgba(255, 102, 0, 0.3)'
                         }}
                       />
                     </Box>
@@ -777,7 +823,7 @@ const CreateTeam = () => {
                     borderRadius: 2,
                     boxShadow: '0 4px 20px rgba(0,0,0,0.2)'
                   }} id="team-qr-code">
-                    {registeredTeam?.teamId && (
+                    {registeredTeam?.teamId && registeredTeam?.qrData && (
                       <QRCode
                         value={registeredTeam.qrData}
                         size={200}

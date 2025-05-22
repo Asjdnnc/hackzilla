@@ -30,7 +30,7 @@ const glassPaperSx = {
 const API_URL = import.meta.env.VITE_API_URL;
 
 // Define the list of actions and their corresponding tab labels
-const scanActions = ['check-in', 'lunch', 'dinner', 'snacks'];
+const scanActions = ['check-in', 'lunch', 'dinner', 'snacks', 'allotment'];
 
 const QRScanner = () => {
   const theme = useTheme(); // Use theme
@@ -44,45 +44,144 @@ const QRScanner = () => {
   const [scannedTeam, setScannedTeam] = useState(null);
   const [selectedTabIndex, setSelectedTabIndex] = useState(0); // State for active tab
   const [transitioning, setTransitioning] = useState(false);
+  const [showResult, setShowResult] = useState(false); // New state to control result display
+  const [isProcessingScan, setIsProcessingScan] = useState(false); // New state to prevent duplicate processing
+  const [scannedText, setScannedText] = useState(null); // New state to hold raw scanned text
+
+  // Check URL for tab parameter on mount
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const tabParam = urlParams.get('tab');
+    if (tabParam !== null) {
+      const tabIndex = parseInt(tabParam);
+      if (!isNaN(tabIndex) && tabIndex >= 0 && tabIndex < scanActions.length) {
+        setSelectedTabIndex(tabIndex);
+      }
+    }
+  }, []);
 
   useEffect(() => {
     // Initialize scanner
-    const qrCodeScanner = new Html5Qrcode("reader");
-    setHtml5QrCode(qrCodeScanner);
+    if (!html5QrCode) {
+      const qrCodeScanner = new Html5Qrcode("reader");
+      setHtml5QrCode(qrCodeScanner);
+    }
 
     // Cleanup on unmount
     return () => {
-      if (qrCodeScanner) {
+      if (html5QrCode) {
         try {
-          const stopPromise = qrCodeScanner.stop();
+          const stopPromise = html5QrCode.stop();
           if (stopPromise && typeof stopPromise.then === 'function') {
-            stopPromise.catch(err => {
-              const msg = typeof err === 'string' ? err : (err && err.message ? err.message : '');
-              if (msg.includes('Cannot stop, scanner is not running or paused')) {
-                // Ignore this error
-              } else {
-                console.error(err);
-              }
-            });
+            stopPromise
+              .then(() => {
+                setScanning(false);
+              })
+              .catch((err) => {
+                setScanning(false);
+              })
+              .finally(() => {
+                setTransitioning(false);
+              });
+          } else {
+            setScanning(false);
+            setTransitioning(false);
+            return Promise.resolve();
           }
         } catch (err) {
-          const msg = typeof err === 'string' ? err : (err && err.message ? err.message : '');
-          if (msg.includes('Cannot stop, scanner is not running or paused')) {
-            // Ignore this error
-          } else {
-            console.error(err);
-          }
+          setScanning(false);
+          setTransitioning(false);
+          return Promise.reject(err);
         }
       }
     };
   }, []);
 
-  // Stop scanner when tab changes or when a scan result is displayed
   useEffect(() => {
-    if (scanning && (action !== scanActions[selectedTabIndex] || scannedTeam)) {
-       stopScanner();
+    if (scanning && showResult) {
+      if (html5QrCode) {
+        html5QrCode.stop().catch(err => {});
+        setScanning(false);
+      }
     }
-  }, [selectedTabIndex, action, scannedTeam, scanning]);
+  }, [scanning, showResult, html5QrCode]);
+
+  useEffect(() => {
+    const processScan = async () => {
+      if (!scannedText || isProcessingScan) {
+        return;
+      }
+      setIsProcessingScan(true);
+
+      await stopScanner();
+
+      try {
+        const qrData = scannedText;
+        const token = localStorage.getItem('token');
+        const config = {
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${token}`
+          }
+        };
+
+        const currentAction = scanActions[selectedTabIndex];
+
+        const actionResponse = await axios.post(`${API_URL}/api/teams/scan`, { qrData, action: currentAction }, config);
+
+        const updatedTeamId = actionResponse.data.data?.teamId;
+
+        if (!updatedTeamId) {
+          showMessage('Scan action successful, but could not fetch updated details.', 'warning');
+          setScannedTeam(actionResponse.data.data);
+          setShowResult(true);
+        } else {
+          const teamResponse = await axios.get(`${API_URL}/api/teams/${updatedTeamId}`, config);
+
+          setScannedTeam(teamResponse.data.data);
+          setShowResult(true);
+
+          if (currentAction === 'check-in') {
+            showMessage(`Team "${teamResponse.data.data.name}" checked in successfully!`, "success");
+          } else if (['lunch', 'dinner', 'snacks'].includes(currentAction)) {
+            const mealStatus = teamResponse.data.data.foodStatus?.[currentAction] || 'invalid';
+            showMessage(`${currentAction.charAt(0).toUpperCase() + currentAction.slice(1)} status set to ${mealStatus.toUpperCase()} for team "${teamResponse.data.data.name}"!`, "success");
+          } else if (currentAction === 'allotment') {
+            const allotmentStatus = teamResponse.data.data.allotment || 'invalid';
+            showMessage(`Allotment status set to ${allotmentStatus.toUpperCase()} for team "${teamResponse.data.data.name}"!`, "success");
+          }
+        }
+      } catch (error) {
+        const errorMessage = error.response?.data?.message || error.message || "An unexpected error occurred.";
+        const errorStatus = error.response?.status;
+
+        if (errorStatus === 400 && error.response?.data?.message) {
+          showMessage(`Warning: ${error.response.data.message}`, "warning");
+        } else if (errorStatus === 404) {
+          showMessage("Team not found after scan.", "error");
+        } else {
+          showMessage(`Error: ${errorMessage}`, "error");
+        }
+        setScannedTeam(null);
+        setShowResult(false);
+      } finally {
+        setIsProcessingScan(false);
+        setScannedText(null);
+        
+        if (html5QrCode) {
+          try {
+            if (scanning) {
+              await html5QrCode.stop();
+            }
+            await html5QrCode.clear();
+            setHtml5QrCode(null);
+          } catch (err) {}
+        }
+        setScanning(false);
+      }
+    }
+    processScan();
+  }, [scannedText, isProcessingScan, html5QrCode, selectedTabIndex]);
 
   const getScannerSize = () => {
     if (isMobile) {
@@ -96,9 +195,14 @@ const QRScanner = () => {
   const scannerSize = getScannerSize();
 
   const startScanner = () => {
-    if (!html5QrCode || scanning || transitioning) return;
+    if (!html5QrCode || scanning || transitioning || isProcessingScan) {
+      return;
+    }
     setTransitioning(true);
     setScannedTeam(null);
+    setShowResult(false);
+    setScannedText(null);
+    
     const config = {
       fps: 30,
       qrbox: scannerSize,
@@ -128,63 +232,44 @@ const QRScanner = () => {
   };
 
   const stopScanner = () => {
-    if (!html5QrCode || !scanning || transitioning) return;
+    if (!html5QrCode || !scanning || transitioning) {
+      return Promise.resolve();
+    }
     setTransitioning(true);
+
     try {
       const stopPromise = html5QrCode.stop();
       if (stopPromise && typeof stopPromise.then === 'function') {
-        stopPromise
-          .then(() => setScanning(false))
-          .catch(() => setScanning(false))
-          .finally(() => setTransitioning(false));
+        return stopPromise
+          .then(() => {
+            setScanning(false);
+          })
+          .catch((err) => {
+            setScanning(false);
+          })
+          .finally(() => {
+            setTransitioning(false);
+          });
+      } else {
+        setScanning(false);
+        setTransitioning(false);
+        return Promise.resolve();
       }
-    } catch {
+    } catch (err) {
       setScanning(false);
       setTransitioning(false);
+      return Promise.reject(err);
     }
   };
 
   const onScanSuccess = async (decodedText) => {
-    // Stop scanner after successful scan
-    stopScanner();
-    
-    try {
-      // Parse QR data (assuming decodedText is the qrData)
-      const qrData = decodedText;
-      
-      // Send to backend
-      const token = localStorage.getItem('token');
-      const config = {
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`
-        }
-      };
-      
-      // Use the current action derived from the selected tab
-      const currentAction = scanActions[selectedTabIndex];
-
-      const response = await axios.post(`${API_URL}/api/teams/scan`, { qrData, action: currentAction }, config);
-      
-      setScannedTeam(response.data.data);
-      
-      let successMessage = '';
-      if (currentAction === 'check-in') {
-        successMessage = `Team "${response.data.data.name}" checked in successfully!`;
-      } else {
-        successMessage = `${currentAction.charAt(0).toUpperCase() + currentAction.slice(1)} status updated for team "${response.data.data.name}"!`;
-      }
-      
-      showMessage(successMessage, "success");
-    } catch (error) {
-      console.error("Error processing QR code:", error);
-      showMessage(error.response?.data?.message || "Invalid QR code or server error", "error");
+    if (!isProcessingScan) {
+      setScannedText(decodedText);
     }
   };
 
   const onScanFailure = (error) => {
-    // Handle scan failure silently - no need to show errors during normal scanning
-    // console.log("QR code scanning failure:", error); // Keep this for debugging if needed
+    // Handle scan failure silently
   };
 
   const showMessage = (msg, sev) => {
@@ -199,16 +284,44 @@ const QRScanner = () => {
 
   const handleTabChange = (event, newValue) => {
     setSelectedTabIndex(newValue);
-    // Stop scanning when tab changes
-    stopScanner();
-     // Clear any previous scan result when tab changes
+    if (html5QrCode) {
+      if (scanning) {
+        html5QrCode.stop().catch(err => {});
+      }
+      html5QrCode.clear().catch(err => {});
+      setHtml5QrCode(null);
+    }
     setScannedTeam(null);
+    setShowResult(false);
+    setScanning(false);
   };
 
-  const resetScan = () => {
-    setScannedTeam(null);
-    // Optionally restart scanner after reset if desired, or let user click start
-    // startScanner(); 
+  const resetScan = async () => {
+    try {
+      if (html5QrCode) {
+        if (scanning) {
+          await html5QrCode.stop();
+        }
+        await html5QrCode.clear();
+        setHtml5QrCode(null);
+      }
+      
+      setScannedTeam(null);
+      setShowResult(false);
+      setScanning(false);
+      setIsProcessingScan(false);
+      setScannedText(null);
+      
+      const newScanner = new Html5Qrcode("reader");
+      setHtml5QrCode(newScanner);
+    } catch (err) {
+      setScannedTeam(null);
+      setShowResult(false);
+      setScanning(false);
+      setIsProcessingScan(false);
+      setScannedText(null);
+      setHtml5QrCode(null);
+    }
   };
 
   return (
@@ -255,7 +368,7 @@ const QRScanner = () => {
           </Box>
 
           {/* Content based on selected tab or scan result */}
-          {!scannedTeam ? (
+          {!showResult ? ( // Render scanner if showResult is false, else render result
             <>
               <Box sx={{ width: '100%', display: 'flex', justifyContent: 'center' }}>
                 <div
@@ -329,6 +442,14 @@ const QRScanner = () => {
                  <Typography variant="body1" sx={{ mb: 1, color: 'rgba(255,255,255,0.8)' }}>Status: {scannedTeam.status}</Typography>
                  <Typography variant="body1" sx={{ mb: 2, color: 'rgba(255,255,255,0.8)' }}>College: {scannedTeam.collegeName}</Typography>
                 
+                {/* Display Allotment Status in Scan Result */}
+                <Box sx={{ mt: 2, p: 2, bgcolor: 'rgba(255,255,255,0.05)', borderRadius: 1, border: '1px solid rgba(255,255,255,0.1)' }}>
+                     <Typography variant="subtitle1" sx={{ color: theme.palette.primary.light, fontWeight: 600, mb: 1 }}>Allotment Status:</Typography>
+                    <Typography variant="body2" sx={{ color: 'rgba(255,255,255,0.8)' }}>
+                        {scannedTeam.allotment === 'valid' ? '✅ Valid' : '❌ Invalid'}
+                    </Typography>
+                </Box>
+
                 <Box sx={{ mt: 2, p: 2, bgcolor: 'rgba(255,255,255,0.05)', borderRadius: 1, border: '1px solid rgba(255,255,255,0.1)' }}> {/* Styled Box for food status */}
                   <Typography variant="subtitle1" sx={{ color: theme.palette.primary.light, fontWeight: 600, mb: 1 }}>Food Status:</Typography>
                   <Typography variant="body2" sx={{ color: 'rgba(255,255,255,0.8)' }}>Lunch: {scannedTeam.foodStatus?.lunch === 'valid' ? '✅ Valid' : '❌ Invalid'}</Typography>
@@ -337,20 +458,42 @@ const QRScanner = () => {
                 </Box>
               </Paper>
               
-              <Button 
-                variant="contained" 
-                color="primary" 
-                onClick={resetScan}
-                 sx={{
-                       background: 'linear-gradient(45deg, #ff6600, #ff8533)', // Gradient background
-                       color: '#fff',
-                       fontWeight: 700,
-                       mt: 2,
-                       '&:hover': { background: 'linear-gradient(45deg, #ff8533, #ff6600)' },
-                    }}
-              >
-                Scan Another Team
-              </Button>
+              <Box sx={{ display: 'flex', gap: 2, justifyContent: 'center', mt: 2 }}>
+                <Button 
+                  variant="contained" 
+                  color="primary" 
+                  onClick={resetScan}
+                  sx={{
+                    background: 'linear-gradient(45deg, #ff6600, #ff8533)',
+                    color: '#fff',
+                    fontWeight: 700,
+                    '&:hover': { background: 'linear-gradient(45deg, #ff8533, #ff6600)' },
+                  }}
+                >
+                  Scan Another Team
+                </Button>
+                <Button 
+                  variant="outlined" 
+                  color="primary" 
+                  onClick={() => {
+                    // Add the current tab index to the URL before reloading
+                    const currentUrl = new URL(window.location.href);
+                    currentUrl.searchParams.set('tab', selectedTabIndex);
+                    window.location.href = currentUrl.toString();
+                  }}
+                  sx={{
+                    color: '#ff6600',
+                    borderColor: '#ff6600',
+                    fontWeight: 700,
+                    '&:hover': { 
+                      borderColor: '#ff8533',
+                      backgroundColor: 'rgba(255, 102, 0, 0.1)'
+                    },
+                  }}
+                >
+                  Reload Scanner
+                </Button>
+              </Box>
             </Box>
           )}
           

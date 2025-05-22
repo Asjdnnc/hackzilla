@@ -1,4 +1,4 @@
-import React, { useContext, useState } from 'react';
+import React, { useContext, useState, useEffect } from 'react';
 import { 
   Container, 
   Typography, 
@@ -30,8 +30,8 @@ import EmailIcon from '@mui/icons-material/Email';
 import PhoneIcon from '@mui/icons-material/Phone';
 import LocationOnIcon from '@mui/icons-material/LocationOn';
 import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
+import TimerIcon from '@mui/icons-material/Timer';
 
-import { useEffect } from 'react';
 import axios from 'axios';
 
 const API_URL = import.meta.env.VITE_API_URL;
@@ -86,6 +86,7 @@ const useStyles = makeStyles({
     padding: '64px 0',
     background: 'linear-gradient(180deg, rgba(255, 255, 255, 0.02) 0%, rgba(255, 255, 255, 0.05) 100%)',
     position: 'relative',
+    marginTop: '80px',
     '&::before': {
       content: '""',
       position: 'absolute',
@@ -307,6 +308,49 @@ const useStyles = makeStyles({
       maxWidth: '300px',
     },
   },
+  countdownContainer: {
+    background: 'rgba(30, 30, 30, 0.85)',
+    borderRadius: '16px',
+    border: '1px solid rgba(255,255,255,0.08)',
+    padding: '24px',
+    marginTop: '28px',
+    width: '100%',
+    maxWidth: '800px',
+    backdropFilter: 'blur(10px)',
+    boxShadow: '0 4px 20px rgba(0,0,0,0.2)',
+  },
+  countdownTitle: {
+    color: '#ff6600',
+    fontWeight: 600,
+    marginBottom: '24px',
+    display: 'flex',
+    alignItems: 'center',
+    gap: '8px',
+    fontSize: '1.5rem',
+  },
+  timerDisplay: {
+    display: 'flex',
+    justifyContent: 'center',
+    gap: '24px',
+  },
+  timeUnit: {
+    background: 'rgba(255, 102, 0, 0.1)',
+    borderRadius: '12px',
+    padding: '20px',
+    minWidth: '140px',
+    textAlign: 'center',
+  },
+  timeValue: {
+    fontSize: '3rem',
+    fontWeight: 700,
+    color: '#ff6600',
+    lineHeight: 1,
+  },
+  timeLabel: {
+    fontSize: '1rem',
+    color: 'rgba(255,255,255,0.7)',
+    marginTop: '8px',
+  },
 });
 
 const Home = () => {
@@ -315,6 +359,36 @@ const Home = () => {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   const navigate = useNavigate();
+  const [timeLeft, setTimeLeft] = useState({
+    hours: 0,
+    minutes: 0,
+    seconds: 0
+  });
+
+  // Set hackathon start time (adjust this to your hackathon's start time)
+  const hackathonStart = new Date('2024-05-28T12:00:00'); // Updated to May 28, 12 noon
+  const hackathonEnd = new Date(hackathonStart.getTime() + 24 * 60 * 60 * 1000);
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      const now = new Date();
+      const difference = hackathonEnd - now;
+
+      if (difference <= 0) {
+        setTimeLeft({ hours: 0, minutes: 0, seconds: 0 });
+        clearInterval(timer);
+        return;
+      }
+
+      const hours = Math.floor(difference / (1000 * 60 * 60));
+      const minutes = Math.floor((difference % (1000 * 60 * 60)) / (1000 * 60));
+      const seconds = Math.floor((difference % (1000 * 60)) / 1000);
+
+      setTimeLeft({ hours, minutes, seconds });
+    }, 1000);
+
+    return () => clearInterval(timer);
+  }, []);
 
   useEffect(() => {
     axios.get(`${API_URL}/api/ping`).catch(() => {});
@@ -373,7 +447,7 @@ const Home = () => {
       <Box sx={{ mt: '0px' }}>
         <Box className={classes.hero}>
           <Container maxWidth="lg" className={classes.heroContent}>
-            <Grid container spacing={4} alignItems="center">
+            <Grid container spacing={4} alignItems="flex-start">
               <Grid item xs={12} md={6}>
                 <Box>
                   <Typography variant="h1" className={classes.heroTitle} gutterBottom>
@@ -389,7 +463,7 @@ const Home = () => {
                   >
                     {!user ? (
                       <>
-                        {/* <Button 
+                        <Button 
                           component={Link} 
                           to="/register" 
                           variant="contained" 
@@ -397,7 +471,7 @@ const Home = () => {
                           endIcon={<ArrowForwardIcon />}
                         >
                           Get Started
-                        </Button> */}
+                        </Button>
                         <Button 
                           component={Link} 
                           to="/login" 
@@ -427,7 +501,7 @@ const Home = () => {
                     ) : user.role === 'volunteer' ? (
                       <Button 
                         component={Link} 
-                        to="/qr-scanner"
+                        to="/admin/scanner"
                         variant="contained" 
                         className={`${classes.ctaButton} primary`}
                         startIcon={<QrCodeScannerIcon />}
@@ -448,7 +522,7 @@ const Home = () => {
                     {user && (user.isAdmin || user.role === 'volunteer') && (
                       <Button 
                         component={Link} 
-                        to="/qr-scanner"
+                        to="/admin/scanner"
                         variant="outlined"
                         sx={{ 
                           color: 'white', 
@@ -469,6 +543,7 @@ const Home = () => {
               <Grid item xs={12} md={6}>
                 <Box sx={{ 
                   display: 'flex', 
+                  flexDirection: 'column',
                   justifyContent: 'center',
                   alignItems: 'center',
                   position: 'relative',
@@ -490,6 +565,33 @@ const Home = () => {
                       zIndex: 1,
                     }}
                   />
+                  
+                  {/* Add Countdown Timer */}
+                  <Box className={classes.countdownContainer}>
+                    <Typography variant="h5" className={classes.countdownTitle}>
+                      <TimerIcon /> Time Remaining
+                    </Typography>
+                    <Box className={classes.timerDisplay}>
+                      <Box className={classes.timeUnit}>
+                        <Typography className={classes.timeValue}>
+                          {String(timeLeft.hours).padStart(2, '0')}
+                        </Typography>
+                        <Typography className={classes.timeLabel}>Hours</Typography>
+                      </Box>
+                      <Box className={classes.timeUnit}>
+                        <Typography className={classes.timeValue}>
+                          {String(timeLeft.minutes).padStart(2, '0')}
+                        </Typography>
+                        <Typography className={classes.timeLabel}>Minutes</Typography>
+                      </Box>
+                      <Box className={classes.timeUnit}>
+                        <Typography className={classes.timeValue}>
+                          {String(timeLeft.seconds).padStart(2, '0')}
+                        </Typography>
+                        <Typography className={classes.timeLabel}>Seconds</Typography>
+                      </Box>
+                    </Box>
+                  </Box>
                 </Box>
               </Grid>
             </Grid>

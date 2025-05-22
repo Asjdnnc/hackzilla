@@ -36,7 +36,7 @@ import { useNavigate } from 'react-router-dom';
 import { AuthContext } from '../../context/AuthContext';
 import axios from 'axios';
 import QRCode from 'qrcode.react';
-import { Search, Edit, QrCode, Delete as DeleteIcon, AddCircleOutline as AddIcon, Visibility as ViewIcon, Download as DownloadIcon } from '@mui/icons-material';
+import { Search, Edit, QrCode, Delete as DeleteIcon, AddCircleOutline as AddIcon, Visibility as ViewIcon, Download as DownloadIcon, Refresh as RefreshIcon } from '@mui/icons-material';
 
 const API_URL = import.meta.env.VITE_API_URL;
 
@@ -134,6 +134,22 @@ const TeamList = () => {
     borderBottom: '1px solid rgba(255,255,255,0.05)'
   };
 
+  // Style for the food status checkboxes in the table
+  const foodCheckboxSx = {
+    color: theme.palette.primary.main,
+    '&.Mui-checked': {
+      color: theme.palette.primary.main,
+    },
+    padding: 0,
+    mr: 1, // Add some margin to the right of the checkbox
+  };
+
+  // Style for the food status labels
+  const foodLabelSx = {
+    color: 'rgba(255, 255, 255, 0.8)',
+    fontSize: '0.85rem',
+  };
+
   useEffect(() => {
     if (user && user.isAdmin) {
       fetchTeams();
@@ -155,16 +171,14 @@ const TeamList = () => {
       if (Array.isArray(res.data.data)) {
         setTeams(res.data.data);
       } else {
-        console.error('API returned non-array data for teams:', res.data);
         setTeams([]);
       }
     } catch (err) {
-      console.error('Error fetching teams:', err);
       setError('Failed to load teams.');
-      } finally {
-        setLoading(false);
-      }
-    };
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleEditClick = (team) => {
     // Create a deep copy of the team to avoid direct state mutation
@@ -180,8 +194,8 @@ const TeamList = () => {
         isFromIIITS: Boolean(member.isFromIIITS)
       })),
       qrData: team.qrData,
-      // Initialize foodStatus with default values if missing
-      foodStatus: team.foodStatus ? { ...team.foodStatus } : { lunch: 'invalid', dinner: 'invalid', snacks: 'invalid' }
+      foodStatus: team.foodStatus ? { ...team.foodStatus } : { lunch: 'invalid', dinner: 'invalid', snacks: 'invalid' },
+      allotment: team.allotment ? { ...team.allotment } : { status: 'invalid' }
     };
     setSelectedTeam(team);
     setEditedTeam(teamCopy);
@@ -212,7 +226,6 @@ const TeamList = () => {
       setTeamToDeleteId(null);
       fetchTeams();
     } catch (error) {
-      console.error('Error deleting team:', error);
       showMessage(error.response?.data?.message || 'Failed to delete team', 'error');
       setConfirmDeleteDialogOpen(false);
       setTeamToDeleteId(null);
@@ -236,11 +249,9 @@ const TeamList = () => {
   };
 
   const handleDownloadQr = () => {
-    // Use the ref to access the QR code container
     const qrCodeContainer = qrCodeRef.current;
 
     if (qrCodeContainer) {
-      // Find the SVG element within the container using the ref
       const qrCodeSvg = qrCodeContainer.querySelector('svg');
 
       if (qrCodeSvg) {
@@ -256,24 +267,19 @@ const TeamList = () => {
           const pngFile = canvas.toDataURL('image/png');
           const downloadLink = document.createElement('a');
           downloadLink.href = pngFile;
-          // Ensure selectedTeam and teamId exist before using them
           downloadLink.download = `team_${selectedTeam?.teamId || 'qr'}.png`;
           document.body.appendChild(downloadLink);
           downloadLink.click();
           document.body.removeChild(downloadLink);
         };
-        // Handle potential errors during image loading
-        img.onerror = (err) => {
-          console.error("Error loading SVG for canvas:", err);
+        img.onerror = () => {
           showMessage("Failed to generate QR code image.", 'error');
         };
         img.src = 'data:image/svg+xml;base64,' + btoa(svgData);
       } else {
-        console.error("SVG element not found within #team-qr-code");
         showMessage("QR code SVG not found.", 'error');
       }
     } else {
-      console.error("QR code container element (#team-qr-code) not found.");
       showMessage("QR code container not found.", 'error');
     }
   };
@@ -284,10 +290,8 @@ const TeamList = () => {
     setEditedTeam(prev => {
       if (!prev) return prev;
 
-      // Create a new copy of the team to ensure immutability
       const updatedTeam = { ...prev };
 
-      // Handle team-level fields (name, leader, status)
       if (name === 'teamStatus') {
         updatedTeam.status = checked ? 'valid' : 'invalid';
       } else if (name === 'teamName' || name === 'teamLeader') {
@@ -296,38 +300,31 @@ const TeamList = () => {
           teamLeader: 'leader'
         };
         updatedTeam[fieldMap[name]] = value;
+      } else if (name === 'allotmentStatus') {
+        updatedTeam.allotment = checked ? 'valid' : 'invalid';
       }
-      // Handle food status fields
       else if (name === 'foodLunch' || name === 'foodDinner' || name === 'foodSnacks') {
-          // Ensure foodStatus object exists
-          if (!updatedTeam.foodStatus) {
-              updatedTeam.foodStatus = { lunch: 'invalid', dinner: 'invalid', snacks: 'invalid' };
-          }
-           // Map form input name to food status property name and update
-          const foodFieldMap = {
-              foodLunch: 'lunch',
-              foodDinner: 'dinner',
-              foodSnacks: 'snacks'
-          };
-          const foodFieldName = foodFieldMap[name];
-          if (foodFieldName) {
-              updatedTeam.foodStatus[foodFieldName] = checked ? 'valid' : 'invalid';
-          } else {
-              console.error('Unknown food status input name:', name);
-          }
+        if (!updatedTeam.foodStatus) {
+          updatedTeam.foodStatus = { lunch: 'invalid', dinner: 'invalid', snacks: 'invalid' };
+        }
+        const foodFieldMap = {
+          foodLunch: 'lunch',
+          foodDinner: 'dinner',
+          foodSnacks: 'snacks'
+        };
+        const foodFieldName = foodFieldMap[name];
+        if (foodFieldName) {
+          updatedTeam.foodStatus[foodFieldName] = checked ? 'valid' : 'invalid';
+        }
       }
-      // Handle member fields
       else if (typeof index === 'number') {
-        // Ensure members array exists and create a mutable copy
         const updatedMembers = [...(updatedTeam.members || [])];
 
-        // Ensure the member object exists at the index and create a mutable copy
         if (!updatedMembers[index]) {
           updatedMembers[index] = { name: '', collegeName: '', isFromIIITS: false };
         }
         const updatedMember = { ...updatedMembers[index] };
 
-        // Map form input name to member object property name and update the specific field
         const memberFieldMap = {
           memberName: 'name',
           memberCollege: 'collegeName',
@@ -336,16 +333,9 @@ const TeamList = () => {
         const memberFieldName = memberFieldMap[name];
 
         if (memberFieldName) {
-           // Update the specific field based on input type
           updatedMember[memberFieldName] = type === 'checkbox' ? checked : value;
-
-          // Place the updated member object back into the updated members array
           updatedMembers[index] = updatedMember;
-
-          // Update the team's members array with the new array
           updatedTeam.members = updatedMembers;
-        } else {
-            console.error('Unknown member input name:', name); // Log unknown names
         }
       }
       return updatedTeam;
@@ -384,7 +374,6 @@ const TeamList = () => {
         return;
       }
 
-      // Validate required fields
       if (!editedTeam.name?.trim()) {
         showMessage('Team name is required', 'error');
         return;
@@ -394,7 +383,6 @@ const TeamList = () => {
         return;
       }
 
-      // Validate members
       if (!editedTeam.members || !Array.isArray(editedTeam.members)) {
         showMessage('Invalid members data', 'error');
         return;
@@ -421,7 +409,6 @@ const TeamList = () => {
         }
       };
 
-      // Prepare the update data including foodStatus
       const updateData = {
         name: editedTeam.name.trim(),
         leader: editedTeam.leader.trim(),
@@ -431,11 +418,10 @@ const TeamList = () => {
           collegeName: member.collegeName.trim(),
           isFromIIITS: Boolean(member.isFromIIITS)
         })),
-        // Include foodStatus
-        foodStatus: editedTeam.foodStatus || { lunch: 'invalid', dinner: 'invalid', snacks: 'invalid' }
+        foodStatus: editedTeam.foodStatus || { lunch: 'invalid', dinner: 'invalid', snacks: 'invalid' },
+        allotment: editedTeam.allotment || { status: 'invalid' }
       };
 
-      // Use teamId instead of _id for the update
       const response = await axios.put(
         `${API_URL}/api/teams/${editedTeam.teamId}`,
         updateData,
@@ -443,14 +429,19 @@ const TeamList = () => {
       );
 
       if (response.data?.success) {
+        const updatedTeam = response.data.data;
+        setTeams(prevTeams =>
+          prevTeams.map(team =>
+            team.teamId === updatedTeam.teamId ? updatedTeam : team
+          )
+        );
+
         showMessage('Team updated successfully!', 'success');
         handleCloseEditDialog();
-        fetchTeams(); // Refresh the team list
       } else {
         throw new Error(response.data?.message || 'Failed to update team');
       }
     } catch (error) {
-      console.error('Error updating team:', error);
       const errorMessage = error.response?.data?.message || error.message || 'Failed to update team';
       showMessage(errorMessage, 'error');
     }
@@ -480,7 +471,7 @@ const TeamList = () => {
   const handleDownloadCSV = () => {
     try {
       // Create CSV header
-      const headers = ['Team ID', 'Team Name', 'Leader', 'Status', 'Members Count', 'Lunch Status', 'Dinner Status', 'Snacks Status', 'Members'];
+      const headers = ['Team ID', 'Team Name', 'Leader', 'Status', 'Members Count', 'Lunch Status', 'Dinner Status', 'Snacks Status', 'Members', 'Allotment Status'];
       
       // Create CSV rows
       const csvRows = teams.map(team => {
@@ -497,7 +488,8 @@ const TeamList = () => {
           team.foodStatus?.lunch || 'invalid',
           team.foodStatus?.dinner || 'invalid',
           team.foodStatus?.snacks || 'invalid',
-          members
+          members,
+          team.allotment || 'invalid'
         ];
       });
 
@@ -520,8 +512,86 @@ const TeamList = () => {
       
       showMessage('Teams data downloaded successfully!', 'success');
     } catch (error) {
-      console.error('Error downloading CSV:', error);
       showMessage('Failed to download teams data', 'error');
+    }
+  };
+
+  const handleFoodStatusChange = async (teamIdBackend, mealType, isChecked) => {
+    try {
+      const token = localStorage.getItem('token');
+      if (!token) {
+        showMessage('Authentication required', 'error');
+        return;
+      }
+
+      const config = {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      };
+
+      // Find the team in the current state to get its current data
+      const currentTeam = teams.find(team => team.teamId === teamIdBackend);
+
+      if (!currentTeam) {
+        showMessage(`Team with ID ${teamIdBackend} not found locally. Please refresh.`, 'error');
+        return;
+      }
+
+      // Create the update data object
+      const updateData = {
+        name: currentTeam.name,
+        leader: currentTeam.leader,
+        status: currentTeam.status,
+        members: currentTeam.members.map(member => ({
+          name: member.name,
+          collegeName: member.collegeName,
+          isFromIIITS: Boolean(member.isFromIIITS)
+        }))
+      };
+
+      // Handle allotment status update
+      if (mealType === 'allotment') {
+        updateData.allotment = isChecked ? 'valid' : 'invalid';
+      } else {
+        // Handle food status update
+        updateData.foodStatus = {
+          ...(currentTeam.foodStatus || { lunch: 'invalid', dinner: 'invalid', snacks: 'invalid' }),
+          [mealType]: isChecked ? 'valid' : 'invalid'
+        };
+      }
+
+      // Optimistically update the frontend state
+      setTeams(prevTeams =>
+        prevTeams.map(team =>
+          team.teamId === teamIdBackend
+            ? {
+                ...team,
+                ...(mealType === 'allotment'
+                  ? { allotment: isChecked ? 'valid' : 'invalid' }
+                  : { foodStatus: { ...team.foodStatus, [mealType]: isChecked ? 'valid' : 'invalid' } })
+              }
+            : team
+        )
+      );
+
+      // Send the update to the backend
+      await axios.put(`${API_URL}/api/teams/${teamIdBackend}`, updateData, config);
+
+      showMessage(`${mealType.charAt(0).toUpperCase() + mealType.slice(1)} status updated for team successfully!`, 'success');
+
+    } catch (error) {
+      // Revert optimistic update if API call fails
+      const originalTeam = teams.find(team => team.teamId === teamIdBackend);
+      if (originalTeam) {
+        setTeams(prevTeams =>
+          prevTeams.map(team =>
+            team.teamId === teamIdBackend ? originalTeam : team
+          )
+        );
+      }
+      showMessage(error.response?.data?.message || `Failed to update ${mealType} status`, 'error');
     }
   };
 
@@ -570,8 +640,8 @@ const TeamList = () => {
           Manage Teams
         </Typography>
         
-        <Box sx={{ display: 'flex', gap: 2, mb: 4, flexDirection: { xs: 'column', sm: 'row' } }}>
-          <Box sx={{ ...searchBoxSx, flex: 1 }}>
+        <Box sx={{ display: 'flex', gap: 2, mb: 4, flexDirection: { xs: 'column', sm: 'row' }, alignItems: 'center' }}>
+          <Box sx={{ ...searchBoxSx, flex: 1, mb: { xs: 0, sm: 0 } }}>
             <Search sx={{ color: theme.palette.primary.main, fontSize: 28 }} />
             <Input
               fullWidth
@@ -582,21 +652,36 @@ const TeamList = () => {
               sx={inputSx}
             />
           </Box>
-          <Button
-            variant="contained"
-            startIcon={<DownloadIcon />}
-            onClick={handleDownloadCSV}
-            sx={{
-              bgcolor: theme.palette.secondary.main,
-              '&:hover': {
-                bgcolor: theme.palette.secondary.dark,
-              },
-              minWidth: { xs: '100%', sm: 'auto' },
-              height: { xs: 'auto', sm: '56px' },
-            }}
-          >
-            Download CSV
-          </Button>
+          <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} sx={{ width: { xs: '100%', sm: 'auto' } }}>
+            <Button
+              variant="outlined"
+              startIcon={<RefreshIcon />}
+              onClick={fetchTeams}
+              sx={{
+                color: theme.palette.info.main,
+                borderColor: theme.palette.info.main,
+                '&:hover': { borderColor: theme.palette.info.light },
+                minWidth: { xs: '100%', sm: 'auto' },
+              }}
+            >
+              Reload Data
+            </Button>
+            <Button
+              variant="contained"
+              startIcon={<DownloadIcon />}
+              onClick={handleDownloadCSV}
+              sx={{
+                bgcolor: theme.palette.secondary.main,
+                '&:hover': {
+                  bgcolor: theme.palette.secondary.dark,
+                },
+                minWidth: { xs: '100%', sm: 'auto' },
+                height: { xs: 'auto', sm: 'auto' },
+              }}
+            >
+              Download CSV
+            </Button>
+          </Stack>
         </Box>
         
         {isDesktop ? (
@@ -609,6 +694,8 @@ const TeamList = () => {
                   <TableCell sx={darkTableHeadCellStyle}>Leader</TableCell>
                   <TableCell sx={darkTableHeadCellStyle}>Status</TableCell>
                   <TableCell sx={darkTableHeadCellStyle}>Members</TableCell>
+                  <TableCell sx={darkTableHeadCellStyle}>Food Status</TableCell>
+                  <TableCell sx={darkTableHeadCellStyle}>Allotment</TableCell>
                   <TableCell sx={darkTableHeadCellStyle} align="right">Actions</TableCell>
                 </TableRow>
               </TableHead>
@@ -620,6 +707,57 @@ const TeamList = () => {
                     <TableCell sx={darkTableBodyCellStyle}>{team.leader}</TableCell>
                     <TableCell sx={darkTableBodyCellStyle}>{getStatusChip(team.status)}</TableCell>
                     <TableCell sx={darkTableBodyCellStyle}>{team.members.length}</TableCell>
+                    <TableCell sx={darkTableBodyCellStyle}>
+                      {/* Food Status Checkboxes */}
+                      <Stack direction="column" spacing={0.5}>
+                          <FormControlLabel
+                              control={
+                                  <Checkbox
+                                      checked={team.foodStatus?.lunch === 'valid'}
+                                      onChange={(e) => handleFoodStatusChange(team.teamId, 'lunch', e.target.checked)}
+                                      sx={foodCheckboxSx}
+                                  />
+                              }
+                              label="Lunch"
+                              sx={foodLabelSx}
+                          />
+                          <FormControlLabel
+                              control={
+                                  <Checkbox
+                                      checked={team.foodStatus?.dinner === 'valid'}
+                                      onChange={(e) => handleFoodStatusChange(team.teamId, 'dinner', e.target.checked)}
+                                      sx={foodCheckboxSx}
+                                  />
+                              }
+                              label="Dinner"
+                              sx={foodLabelSx}
+                          />
+                          <FormControlLabel
+                              control={
+                                  <Checkbox
+                                      checked={team.foodStatus?.snacks === 'valid'}
+                                      onChange={(e) => handleFoodStatusChange(team.teamId, 'snacks', e.target.checked)}
+                                      sx={foodCheckboxSx}
+                                  />
+                              }
+                              label="Snacks"
+                              sx={foodLabelSx}
+                          />
+                      </Stack>
+                    </TableCell>
+                    <TableCell sx={darkTableBodyCellStyle}>
+                      <FormControlLabel
+                          control={
+                              <Checkbox
+                                  checked={team.allotment === 'valid'}
+                                  onChange={(e) => handleFoodStatusChange(team.teamId, 'allotment', e.target.checked)}
+                                  sx={foodCheckboxSx}
+                              />
+                          }
+                          label="Allotment"
+                          sx={foodLabelSx}
+                      />
+                    </TableCell>
                     <TableCell sx={darkTableBodyCellStyle} align="right">
                       <Stack direction="row" spacing={1} justifyContent="flex-end">
                         <Button
@@ -829,6 +967,22 @@ const TeamList = () => {
                   </Stack>
                 </Grid>
 
+                <Grid item xs={12} sm={6}>
+                  <FormControlLabel
+                      control={
+                          <Checkbox
+                              checked={editedTeam.allotment === 'valid'}
+                              onChange={handleInputChange}
+                              name="allotmentStatus"
+                              color="primary"
+                              sx={{ color: theme.palette.primary.main }}
+                          />
+                      }
+                      label="Allotment Valid"
+                      sx={{ color: 'rgba(255, 255, 255, 0.8)' }}
+                  />
+                </Grid>
+
                 <Grid item xs={12}>
                   <Typography variant="h6" sx={{ color: theme.palette.primary.main, mt: 2, mb: 1 }}>
                     Members
@@ -944,6 +1098,8 @@ const TeamList = () => {
                 <Typography variant="h6" sx={{ mb: 1, color: theme.palette.primary.main, fontWeight: 600 }}>{selectedTeam.name}</Typography>
                 <Typography variant="body1" sx={{ mb: 1 }}>Leader: <b>{selectedTeam.leader}</b></Typography>
                 <Typography variant="body2" sx={{ mb: 2 }}>Team ID: {selectedTeam.teamId}</Typography>
+
+                <Typography variant="body1" sx={{ mb: 2 }}>Allotment Status: {getStatusChip(selectedTeam.allotment || 'invalid')}</Typography>
 
                 <Typography variant="subtitle2" sx={{ color: theme.palette.secondary.main, fontWeight: 700, mb: 1 }}>
                   Status: {getStatusChip(selectedTeam.status)}

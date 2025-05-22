@@ -95,8 +95,8 @@ const Header = () => {
       <Toolbar>
         <NavLink to="/" style={{ textDecoration: 'none', color: 'inherit', flexGrow: 1 }}>
           <Typography variant="h6" component="div" sx={{ color: '#ff6600' }}>
-            Hackzilla
-          </Typography>
+          Hackzilla
+        </Typography>
         </NavLink>
         <Box sx={{ display: { xs: 'none', md: 'flex' }, alignItems: 'center' }}>
           {linksToDisplay.map((link) => (
@@ -115,7 +115,7 @@ const Header = () => {
               }}
             >
               {link.text}
-            </Button>
+                </Button>
           ))}
           {user && (user.isAdmin || user.role === 'volunteer') && (
             <Button
@@ -140,12 +140,12 @@ const Header = () => {
           {user ? (
             <Button color="inherit" onClick={handleLogout} sx={{ my: 2, color: 'white' }}>
               Logout ({user.username} - {user.role})
-            </Button>
-          ) : (
+                  </Button>
+                ) : (
             <Button color="inherit" component={NavLink} to="/login" sx={{ my: 2, color: 'white' }}>
               Login
-            </Button>
-          )}
+                  </Button>
+                )}
         </Box>
         <Box sx={{ display: { xs: 'flex', md: 'none' } }}>
                   <IconButton

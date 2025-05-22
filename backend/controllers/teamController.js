@@ -6,7 +6,7 @@ const { validateObjectId } = require('../utils/validators');
 // Create team
 exports.createTeam = async (req, res) => {
   try {
-    const { name, leader, members } = req.body;
+    const { name, leader, members} = req.body;
 
     // Validate required fields (basic check before Mongoose validation)
     if (!name || !leader || !members || !Array.isArray(members) || members.length === 0) {
@@ -65,22 +65,25 @@ exports.createTeam = async (req, res) => {
         lunch: 'invalid',
         dinner: 'invalid',
         snacks: 'invalid'
-      }
+      },
+      // Initialize allotment status, use provided status if valid, otherwise default
+      allotment: 'invalid',
     });
 
     // Construct the data object specifically for the QR code
     const qrDataObject = {
-      teamId: newTeam.teamId, // Get the generated teamId
-      teamName: name, // Use name from req.body
-      leader: leader, // Use leader from req.body
-      members: members.map(m => ({ // Map members from req.body
+      teamId: newTeam.teamId,
+      teamName: name,
+      leader: leader,
+      members: members.map(m => ({
         name: m.name,
         collegeName: m.collegeName,
         isFromIIITS: !!m.isFromIIITS
       })),
-      status: newTeam.status, // Use initial status from newTeam
-      foodStatus: newTeam.foodStatus, // Use initial foodStatus from newTeam
-      createdAt: new Date().toISOString() // Use current date for QR data creation timestamp
+      status: newTeam.status,
+      foodStatus: newTeam.foodStatus,
+      allotment: newTeam.allotment,
+      createdAt: new Date().toISOString()
     };
 
     // Generate QR data string
@@ -160,7 +163,7 @@ exports.getTeamById = async (req, res) => {
 exports.updateTeam = async (req, res) => {
   try {
     const { id } = req.params;
-    const { name, leader, status, members, foodStatus } = req.body;
+    const { name, leader, status, members, foodStatus, allotment } = req.body;
     
     // Find team by teamId instead of _id
     const team = await Team.findOne({ teamId: id });
@@ -217,6 +220,11 @@ exports.updateTeam = async (req, res) => {
       }));
     }
     if (foodStatus) team.foodStatus = foodStatus;
+    
+    // Update allotment status if provided and valid
+    if (allotment && ['valid', 'invalid'].includes(allotment)) {
+      team.allotment = allotment;
+    }
 
     // Save the updated team
     const updatedTeam = await team.save();
@@ -297,8 +305,8 @@ exports.scanQRCode = async (req, res) => {
          if (!team.foodStatus) {
              team.foodStatus = { lunch: 'invalid', dinner: 'invalid', snacks: 'invalid' };
          }
-      } else {
-          return res.status(400).json({ success: false, message: 'Team is already checked in (valid status)' });
+      } else { // Status is already valid
+          return res.status(400).json({ success: false, message: 'Team already has VALID status' });
       }
     } else if (['lunch', 'dinner', 'snacks'].includes(action)) { // Check if action is a valid food type
       // Allow food status update only if team status is valid
@@ -307,11 +315,32 @@ exports.scanQRCode = async (req, res) => {
         if (!team.foodStatus) {
           team.foodStatus = { lunch: 'invalid', dinner: 'invalid', snacks: 'invalid' };
         }
-      // Toggle food status
-        team.foodStatus[action] = team.foodStatus[action] === 'invalid' ? 'valid' : 'invalid';
+        // Only change food status from invalid to valid
+        if (team.foodStatus[action] === 'invalid') {
+           team.foodStatus[action] = 'valid';
+        } else {
+           return res.status(400).json({ success: false, message: `${action.charAt(0).toUpperCase() + action.slice(1)} status is already VALID` });
+        }
       } else {
-          return res.status(400).json({ success: false, message: 'Team must have valid status to update food status' });
+          return res.status(400).json({ success: false, message: 'Team must have VALID status to update food status' });
       }
+    } else if (action === 'allotment') { // Handle allotment status update
+         if (team.status === 'valid') { // Typically allotment would require valid team status
+             // Ensure the allotment object exists (based on model schema, it should)
+             if (!team.allotment) {
+                 // Initialize as string if null/undefined
+                 team.allotment = 'invalid';
+             }
+             // Only change allotment status from invalid to valid
+             if (team.allotment === 'invalid') {
+                team.allotment = 'valid';
+             } else {
+                return res.status(400).json({ success: false, message: 'Allotment status is already VALID' });
+             }
+         } else {
+             return res.status(400).json({ success: false, message: 'Team must have valid status to update allotment status' });
+         }
+
     } else {
       return res.status(400).json({ success: false, message: 'Invalid action' });
     }

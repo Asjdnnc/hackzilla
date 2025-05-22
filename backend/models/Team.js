@@ -70,6 +70,11 @@ const teamSchema = new mongoose.Schema({
     enum: ['valid', 'invalid'],
     default: 'invalid'
   },
+  allotment: {
+    type: String,
+    enum: ['valid', 'invalid'],
+    default: 'invalid'
+  },
   foodStatus: {
     lunch: {
       type: String,

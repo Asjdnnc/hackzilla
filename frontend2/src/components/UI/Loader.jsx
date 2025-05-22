@@ -5,10 +5,10 @@ const Loader = ({ message = 'Loading...' }) => {
   return (
     <Box
       sx={{
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-        justifyContent: 'center',
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'center',
+    justifyContent: 'center',
         minHeight: { xs: 120, sm: 200 },
         width: '100%',
         py: 4,
