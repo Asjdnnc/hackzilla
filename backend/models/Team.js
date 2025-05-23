@@ -51,20 +51,22 @@ const teamSchema = new mongoose.Schema({
     required: [true, 'Team leader is required'],
     trim: true
   },
-  members: [{
-    name: {
-      type: String,
-      required: true
-    },
-    collegeName: {
-    type: String,
-    required: true
+  lunchcount: {
+    type: Number,
+    default: 0,
+    min: [0, 'Lunch count cannot be negative']
   },
-    isFromIIITS: {
-      type: Boolean,
-      default: false
-    }
-  }],
+  dinnercount: {
+    type: Number,
+    default: 0,
+    min: [0, 'Dinner count cannot be negative']
+  },
+  snackscount: {
+    type: Number,
+    default: 0,
+    min: [0, 'Snacks count cannot be negative']
+  },
+  members: [teamMemberSchema],
   status: {
     type: String,
     enum: ['valid', 'invalid'],
@@ -75,23 +77,7 @@ const teamSchema = new mongoose.Schema({
     enum: ['valid', 'invalid'],
     default: 'invalid'
   },
-  foodStatus: {
-    lunch: {
-      type: String,
-      enum: ['valid', 'invalid'],
-      default: 'invalid'
-    },
-    dinner: {
-      type: String,
-      enum: ['valid', 'invalid'],
-      default: 'invalid'
-    },
-    snacks: {
-      type: String,
-      enum: ['valid', 'invalid'],
-      default: 'invalid'
-    }
-  },
+  foodStatus: foodStatusSchema,
   qrData: {
     type: String,
     required: true

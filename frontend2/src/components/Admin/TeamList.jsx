@@ -36,7 +36,7 @@ import { useNavigate } from 'react-router-dom';
 import { AuthContext } from '../../context/AuthContext';
 import axios from 'axios';
 import QRCode from 'qrcode.react';
-import { Search, Edit, QrCode, Delete as DeleteIcon, AddCircleOutline as AddIcon, Visibility as ViewIcon, Download as DownloadIcon, Refresh as RefreshIcon } from '@mui/icons-material';
+import { Search, Edit, QrCode, Delete as DeleteIcon, AddCircleOutline as AddIcon, Visibility as ViewIcon, Download as DownloadIcon, Refresh as RefreshIcon, Check as CheckIcon, CheckBoxOutlineBlank as CheckboxIcon } from '@mui/icons-material';
 
 const API_URL = import.meta.env.VITE_API_URL;
 
@@ -58,6 +58,8 @@ const TeamList = () => {
   const [openSnackbar, setOpenSnackbar] = useState(false);
   const [editedTeam, setEditedTeam] = useState(null);
   const [searchQuery, setSearchQuery] = useState('');
+  const [tempCounts, setTempCounts] = useState({});
+  const [savedCounts, setSavedCounts] = useState({});
 
   const qrCodeRef = useRef(null);
 
@@ -419,7 +421,10 @@ const TeamList = () => {
           isFromIIITS: Boolean(member.isFromIIITS)
         })),
         foodStatus: editedTeam.foodStatus || { lunch: 'invalid', dinner: 'invalid', snacks: 'invalid' },
-        allotment: editedTeam.allotment || { status: 'invalid' }
+        allotment: editedTeam.allotment || { status: 'invalid' },
+        lunchcount: editedTeam.lunchcount || 0,
+        dinnercount: editedTeam.dinnercount || 0,
+        snackscount: editedTeam.snackscount || 0
       };
 
       const response = await axios.put(
@@ -595,6 +600,104 @@ const TeamList = () => {
     }
   };
 
+  const handleTempCountChange = (teamId, mealType, value) => {
+    setTempCounts(prev => ({
+      ...prev,
+      [`${teamId}-${mealType}`]: value
+    }));
+  };
+
+  const handleCountChange = async (teamId, mealType) => {
+    try {
+      const token = localStorage.getItem('token');
+      if (!token) {
+        showMessage('Authentication required', 'error');
+        return;
+      }
+
+      const config = {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      };
+
+      const currentTeam = teams.find(team => team.teamId === teamId);
+      if (!currentTeam) {
+        showMessage(`Team with ID ${teamId} not found locally. Please refresh.`, 'error');
+        return;
+      }
+
+      const tempValue = tempCounts[`${teamId}-${mealType}`];
+      if (tempValue === undefined) {
+        return;
+      }
+
+      const updateData = {
+        name: currentTeam.name,
+        leader: currentTeam.leader,
+        status: currentTeam.status,
+        members: currentTeam.members.map(member => ({
+          name: member.name,
+          collegeName: member.collegeName,
+          isFromIIITS: Boolean(member.isFromIIITS)
+        })),
+        foodStatus: currentTeam.foodStatus,
+        allotment: currentTeam.allotment,
+        lunchcount: currentTeam.lunchcount || 0,
+        dinnercount: currentTeam.dinnercount || 0,
+        snackscount: currentTeam.snackscount || 0
+      };
+
+      // Update the count based on meal type
+      const countField = `${mealType}count`;
+      updateData[countField] = parseInt(tempValue) || 0;
+
+      // Optimistically update the frontend state
+      setTeams(prevTeams =>
+        prevTeams.map(team =>
+          team.teamId === teamId
+            ? {
+                ...team,
+                [countField]: parseInt(tempValue) || 0
+              }
+            : team
+        )
+      );
+
+      // Send the update to the backend
+      const response = await axios.put(`${API_URL}/api/teams/${teamId}`, updateData, config);
+      
+      if (response.data?.success) {
+        showMessage(`${mealType.charAt(0).toUpperCase() + mealType.slice(1)} count updated successfully!`, 'success');
+        // Clear the temporary value and mark as saved
+        setTempCounts(prev => {
+          const newTempCounts = { ...prev };
+          delete newTempCounts[`${teamId}-${mealType}`];
+          return newTempCounts;
+        });
+        setSavedCounts(prev => ({
+          ...prev,
+          [`${teamId}-${mealType}`]: true
+        }));
+      } else {
+        throw new Error(response.data?.message || 'Failed to update count');
+      }
+
+    } catch (error) {
+      // Revert optimistic update if API call fails
+      const originalTeam = teams.find(team => team.teamId === teamId);
+      if (originalTeam) {
+        setTeams(prevTeams =>
+          prevTeams.map(team =>
+            team.teamId === teamId ? originalTeam : team
+          )
+        );
+      }
+      showMessage(error.response?.data?.message || `Failed to update ${mealType} count`, 'error');
+    }
+  };
+
   const filteredTeams = teams.filter(team =>
     team.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
     team.leader.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -620,11 +723,14 @@ const TeamList = () => {
   return (
     <Box sx={{
       minHeight: '100vh',
+      width: '100vw',
       background: 'linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%)',
       color: '#fff',
-      py: 6,
+      py: 4,
+      px: 2,
+      overflowX: 'hidden'
     }}>
-    <Container maxWidth="lg">
+      <Container maxWidth="xl" sx={{ height: '100%' }}>
         <Typography
           variant={isDesktop ? 'h3' : 'h4'}
           sx={{
@@ -640,8 +746,15 @@ const TeamList = () => {
           Manage Teams
         </Typography>
         
-        <Box sx={{ display: 'flex', gap: 2, mb: 4, flexDirection: { xs: 'column', sm: 'row' }, alignItems: 'center' }}>
-          <Box sx={{ ...searchBoxSx, flex: 1, mb: { xs: 0, sm: 0 } }}>
+        <Box sx={{ 
+          display: 'flex', 
+          gap: 2, 
+          mb: 4, 
+          flexDirection: { xs: 'column', sm: 'row' }, 
+          alignItems: 'center',
+          width: '100%'
+        }}>
+          <Box sx={{ ...searchBoxSx, flex: 1, mb: { xs: 0, sm: 0 }, width: '100%' }}>
             <Search sx={{ color: theme.palette.primary.main, fontSize: 28 }} />
             <Input
               fullWidth
@@ -685,8 +798,15 @@ const TeamList = () => {
         </Box>
         
         {isDesktop ? (
-          <TableContainer component={Paper} sx={darkTableContainerStyle}>
-            <Table aria-label="teams table">
+          <TableContainer 
+            component={Paper} 
+            sx={{
+              ...darkTableContainerStyle,
+              maxHeight: 'calc(100vh - 250px)',
+              overflow: 'auto'
+            }}
+          >
+            <Table stickyHeader aria-label="teams table">
               <TableHead>
                 <TableRow>
                   <TableCell sx={darkTableHeadCellStyle}>Team ID</TableCell>
@@ -710,39 +830,122 @@ const TeamList = () => {
                     <TableCell sx={darkTableBodyCellStyle}>
                       {/* Food Status Checkboxes */}
                       <Stack direction="column" spacing={0.5}>
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                           <FormControlLabel
-                              control={
-                                  <Checkbox
-                                      checked={team.foodStatus?.lunch === 'valid'}
-                                      onChange={(e) => handleFoodStatusChange(team.teamId, 'lunch', e.target.checked)}
-                                      sx={foodCheckboxSx}
-                                  />
-                              }
-                              label="Lunch"
-                              sx={foodLabelSx}
+                            control={
+                              <Checkbox
+                                checked={team.foodStatus?.lunch === 'valid'}
+                                onChange={(e) => handleFoodStatusChange(team.teamId, 'lunch', e.target.checked)}
+                                sx={foodCheckboxSx}
+                              />
+                            }
+                            label="Lunch"
+                            sx={foodLabelSx}
                           />
+                          <TextField
+                            type="number"
+                            size="small"
+                            value={tempCounts[`${team.teamId}-lunch`] !== undefined ? tempCounts[`${team.teamId}-lunch`] : (team.lunchcount || 0)}
+                            onChange={(e) => handleTempCountChange(team.teamId, 'lunch', e.target.value)}
+                            sx={{ 
+                              width: '80px',
+                              '& .MuiOutlinedInput-root': {
+                                color: '#fff',
+                                '& fieldset': { borderColor: 'rgba(255,255,255,0.2)' },
+                                '&:hover fieldset': { borderColor: 'rgba(255,255,255,0.3)' },
+                                '&.Mui-focused fieldset': { borderColor: theme.palette.primary.main }
+                              }
+                            }}
+                          />
+                          <IconButton
+                            size="small"
+                            onClick={() => handleCountChange(team.teamId, 'lunch')}
+                            sx={{ 
+                              color: savedCounts[`${team.teamId}-lunch`] ? theme.palette.primary.main : 'rgba(255,255,255,0.5)',
+                              '&:hover': { color: theme.palette.primary.light }
+                            }}
+                          >
+                            {savedCounts[`${team.teamId}-lunch`] ? <CheckIcon /> : <CheckboxIcon />}
+                          </IconButton>
+                        </Box>
+
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                           <FormControlLabel
-                              control={
-                                  <Checkbox
-                                      checked={team.foodStatus?.dinner === 'valid'}
-                                      onChange={(e) => handleFoodStatusChange(team.teamId, 'dinner', e.target.checked)}
-                                      sx={foodCheckboxSx}
-                                  />
-                              }
-                              label="Dinner"
-                              sx={foodLabelSx}
+                            control={
+                              <Checkbox
+                                checked={team.foodStatus?.dinner === 'valid'}
+                                onChange={(e) => handleFoodStatusChange(team.teamId, 'dinner', e.target.checked)}
+                                sx={foodCheckboxSx}
+                              />
+                            }
+                            label="Dinner"
+                            sx={foodLabelSx}
                           />
+                          <TextField
+                            type="number"
+                            size="small"
+                            value={tempCounts[`${team.teamId}-dinner`] !== undefined ? tempCounts[`${team.teamId}-dinner`] : (team.dinnercount || 0)}
+                            onChange={(e) => handleTempCountChange(team.teamId, 'dinner', e.target.value)}
+                            sx={{ 
+                              width: '80px',
+                              '& .MuiOutlinedInput-root': {
+                                color: '#fff',
+                                '& fieldset': { borderColor: 'rgba(255,255,255,0.2)' },
+                                '&:hover fieldset': { borderColor: 'rgba(255,255,255,0.3)' },
+                                '&.Mui-focused fieldset': { borderColor: theme.palette.primary.main }
+                              }
+                            }}
+                          />
+                          <IconButton
+                            size="small"
+                            onClick={() => handleCountChange(team.teamId, 'dinner')}
+                            sx={{ 
+                              color: savedCounts[`${team.teamId}-dinner`] ? theme.palette.primary.main : 'rgba(255,255,255,0.5)',
+                              '&:hover': { color: theme.palette.primary.light }
+                            }}
+                          >
+                            {savedCounts[`${team.teamId}-dinner`] ? <CheckIcon /> : <CheckboxIcon />}
+                          </IconButton>
+                        </Box>
+
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                           <FormControlLabel
-                              control={
-                                  <Checkbox
-                                      checked={team.foodStatus?.snacks === 'valid'}
-                                      onChange={(e) => handleFoodStatusChange(team.teamId, 'snacks', e.target.checked)}
-                                      sx={foodCheckboxSx}
-                                  />
-                              }
-                              label="Snacks"
-                              sx={foodLabelSx}
+                            control={
+                              <Checkbox
+                                checked={team.foodStatus?.snacks === 'valid'}
+                                onChange={(e) => handleFoodStatusChange(team.teamId, 'snacks', e.target.checked)}
+                                sx={foodCheckboxSx}
+                              />
+                            }
+                            label="Snacks"
+                            sx={foodLabelSx}
                           />
+                          <TextField
+                            type="number"
+                            size="small"
+                            value={tempCounts[`${team.teamId}-snacks`] !== undefined ? tempCounts[`${team.teamId}-snacks`] : (team.snackscount || 0)}
+                            onChange={(e) => handleTempCountChange(team.teamId, 'snacks', e.target.value)}
+                            sx={{ 
+                              width: '80px',
+                              '& .MuiOutlinedInput-root': {
+                                color: '#fff',
+                                '& fieldset': { borderColor: 'rgba(255,255,255,0.2)' },
+                                '&:hover fieldset': { borderColor: 'rgba(255,255,255,0.3)' },
+                                '&.Mui-focused fieldset': { borderColor: theme.palette.primary.main }
+                              }
+                            }}
+                          />
+                          <IconButton
+                            size="small"
+                            onClick={() => handleCountChange(team.teamId, 'snacks')}
+                            sx={{ 
+                              color: savedCounts[`${team.teamId}-snacks`] ? theme.palette.primary.main : 'rgba(255,255,255,0.5)',
+                              '&:hover': { color: theme.palette.primary.light }
+                            }}
+                          >
+                            {savedCounts[`${team.teamId}-snacks`] ? <CheckIcon /> : <CheckboxIcon />}
+                          </IconButton>
+                        </Box>
                       </Stack>
                     </TableCell>
                     <TableCell sx={darkTableBodyCellStyle}>

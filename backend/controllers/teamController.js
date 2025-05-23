@@ -163,7 +163,7 @@ exports.getTeamById = async (req, res) => {
 exports.updateTeam = async (req, res) => {
   try {
     const { id } = req.params;
-    const { name, leader, status, members, foodStatus, allotment } = req.body;
+    const { name, leader, status, members, foodStatus, allotment, lunchcount, dinnercount, snackscount } = req.body;
     
     // Find team by teamId instead of _id
     const team = await Team.findOne({ teamId: id });
@@ -216,30 +216,45 @@ exports.updateTeam = async (req, res) => {
       team.members = members.map(m => ({
         name: m.name,
         collegeName: m.collegeName,
-        isFromIIITS: Boolean(m.isFromIIITS)
+        isFromIIITS: !!m.isFromIIITS
       }));
     }
     if (foodStatus) team.foodStatus = foodStatus;
+    if (allotment) team.allotment = allotment;
     
-    // Update allotment status if provided and valid
-    if (allotment && ['valid', 'invalid'].includes(allotment)) {
-      team.allotment = allotment;
-    }
+    // Update count fields
+    if (lunchcount !== undefined) team.lunchcount = parseInt(lunchcount) || 0;
+    if (dinnercount !== undefined) team.dinnercount = parseInt(dinnercount) || 0;
+    if (snackscount !== undefined) team.snackscount = parseInt(snackscount) || 0;
 
-    // Save the updated team
-    const updatedTeam = await team.save();
-    
+    // Update QR data
+    const qrDataObject = {
+      teamId: team.teamId,
+      teamName: team.name,
+      leader: team.leader,
+      members: team.members,
+      status: team.status,
+      foodStatus: team.foodStatus,
+      allotment: team.allotment,
+      lunchcount: team.lunchcount,
+      dinnercount: team.dinnercount,
+      snackscount: team.snackscount,
+      createdAt: team.createdAt
+    };
+    team.qrData = JSON.stringify(qrDataObject);
+
+    await team.save();
+
     res.status(200).json({
       success: true,
-      message: 'Team updated successfully',
-      data: updatedTeam
+      data: team,
+      message: 'Team updated successfully'
     });
   } catch (error) {
-    console.error('Error in updateTeam:', error);
+    console.error('Error updating team:', error);
     res.status(500).json({
       success: false,
-      message: 'Error updating team',
-      error: error.message
+      message: error.message || 'Failed to update team'
     });
   }
 };

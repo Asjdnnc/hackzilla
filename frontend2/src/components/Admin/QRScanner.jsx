@@ -136,7 +136,18 @@ const QRScanner = () => {
           setScannedTeam(actionResponse.data.data);
           setShowResult(true);
         } else {
-          const teamResponse = await axios.get(`${API_URL}/api/teams/${updatedTeamId}`, config);
+          // Parse the QR data to get the teamId
+          let teamId;
+          try {
+            const parsedQrData = JSON.parse(qrData);
+            teamId = parsedQrData.teamId;
+          } catch (error) {
+            showMessage('Invalid QR code data format', 'error');
+            return;
+          }
+
+          // Use the teamId from the QR data to fetch the team
+          const teamResponse = await axios.get(`${API_URL}/api/teams/${teamId}`, config);
 
           setScannedTeam(teamResponse.data.data);
           setShowResult(true);
@@ -155,15 +166,36 @@ const QRScanner = () => {
         const errorMessage = error.response?.data?.message || error.message || "An unexpected error occurred.";
         const errorStatus = error.response?.status;
 
-        if (errorStatus === 400 && error.response?.data?.message) {
-          showMessage(`Warning: ${error.response.data.message}`, "warning");
+        if (errorStatus === 400) {
+          // For validation errors or business logic errors
+          showMessage(error.response.data.message, "warning");
+          // If the scan was actually successful (like "Team already has VALID status")
+          if (error.response.data.data) {
+            setScannedTeam(error.response.data.data);
+            setShowResult(true);
+          }
         } else if (errorStatus === 404) {
-          showMessage("Team not found after scan.", "error");
+          showMessage("Team not found. Please check the QR code.", "error");
+        } else if (errorStatus === 401) {
+          showMessage("Authentication required. Please log in again.", "error");
+        } else if (errorStatus === 403) {
+          // For volunteer scans, if we get a 403 but the data is there, it's actually a success
+          if (error.response.data.data) {
+            setScannedTeam(error.response.data.data);
+            setShowResult(true);
+            showMessage("Scan processed successfully!", "success");
+          } else {
+            showMessage("You don't have permission to perform this action.", "error");
+          }
         } else {
-          showMessage(`Error: ${errorMessage}`, "error");
+          showMessage("An error occurred while processing the scan. Please try again.", "error");
         }
-        setScannedTeam(null);
-        setShowResult(false);
+        
+        // Only clear the scanned team if we didn't get valid data
+        if (!error.response?.data?.data) {
+          setScannedTeam(null);
+          setShowResult(false);
+        }
       } finally {
         setIsProcessingScan(false);
         setScannedText(null);
