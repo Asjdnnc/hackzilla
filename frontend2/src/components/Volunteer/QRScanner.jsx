@@ -532,4 +532,4 @@ const QRScanner = () => {
   );
 };
 
-export default QRScanner;
+export default QRScanner; 

@@ -15,9 +15,8 @@ import TeamDashboard from './components/Team/TeamDashboard';
 import TeamQRCode from './components/Team/TeamQRCode';
 import AdminDashboard from './components/Admin/AdminDashboard';
 import QRScanner from './components/Admin/QRScanner';
+import VolunteerQRScanner from './components/Volunteer/QRScanner';
 import TeamList from './components/Admin/TeamList';
-
-// Add this import
 import UserManagement from './components/Admin/UserManagement';
 
 // Create a theme
@@ -89,8 +88,8 @@ function App() {
               <Route path="/team-qrcode" element={<TeamQRCode />} />
               <Route path="/admin" element={<AdminDashboard />} />
               <Route path="/admin/scanner" element={<QRScanner />} />
+              <Route path="/volunteer/scanner" element={<VolunteerQRScanner />} />
               <Route path="/admin/teams" element={<TeamList />} />
-              // Add this route inside the Routes component
               <Route path="/admin/users" element={<UserManagement />} />
             </Routes>
           </main>

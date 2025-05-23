@@ -77,7 +77,7 @@ const Header = () => {
           </ListItem>
         ))}
         {user && (user.isAdmin || user.role === 'volunteer') && (
-          <ListItem button component={NavLink} to="/admin/scanner">
+          <ListItem button component={NavLink} to={user.isAdmin ? "/admin/scanner" : "/volunteer/scanner"}>
             <ListItemText primary="Scan QR Code" />
           </ListItem>
         )}
@@ -120,7 +120,7 @@ const Header = () => {
           {user && (user.isAdmin || user.role === 'volunteer') && (
             <Button
               component={NavLink}
-              to="/admin/scanner"
+              to={user.isAdmin ? "/admin/scanner" : "/volunteer/scanner"}
               sx={{
                 my: 2,
                 color: 'white',
